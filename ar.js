@@ -11,14 +11,29 @@ function createAR(opts){
   $('arFov').value = fov;
 
   // ---- sensors ----
+  // iPhone fix (v2): the gyro's alpha is smooth at every angle but starts from an arbitrary zero, while
+  // webkitCompassHeading knows true north but changes what it measures as the phone tilts (top edge when flat,
+  // camera when upright), so it jumps when you look down. Steer with alpha, and use the compass only to set
+  // alpha's zero, only while the phone is held upright, smoothed so a bad reading can't yank the view.
+  let iosOffset = null;
+  const wrap = x => ((x % 360) + 540) % 360 - 180;
   function onOrient(e, absolute){
-    let alpha = e.alpha;
-    if (typeof e.webkitCompassHeading === 'number'){            // iPhone: compass heading, degrees clockwise from magnetic north
-      alpha = 360 - (e.webkitCompassHeading + getState().decl);  // to true north, then into spec's counter-clockwise alpha
-    } else if (!absolute && !e.absolute){ return; }              // Android relative-only readings can't be aimed
-    else { alpha = alpha - getState().decl; }                    // Android absolute alpha is magnetic: correct to true north
-    if (alpha == null || e.beta == null || e.gamma == null) return;
-    ori = {alpha, beta:e.beta, gamma:e.gamma};
+    if (e.alpha == null || e.beta == null || e.gamma == null) return;
+    const decl = getState().decl, H = e.webkitCompassHeading;
+    if (typeof H === 'number' && H >= 0){                        // iPhone: H = degrees clockwise from magnetic north
+      const upright = e.beta > 50 && e.beta < 130 && Math.abs(e.gamma) < 40;
+      if (upright){
+        const camAz = azAltOf(col(matrix(e.alpha, e.beta, e.gamma), 2).map(x=>-x))[0];
+        const target = wrap(camAz - (H + decl));
+        iosOffset = iosOffset === null ? target : wrap(iosOffset + wrap(target - iosOffset)*0.05);
+      } else if (iosOffset === null){
+        iosOffset = wrap((360 - (H + decl)) - e.alpha);           // first reading with the phone flat
+      }
+      ori = {alpha: e.alpha + iosOffset, beta: e.beta, gamma: e.gamma};
+      return;
+    }
+    if (!absolute && !e.absolute) return;                        // Android relative-only readings can't be aimed
+    ori = {alpha: e.alpha - decl, beta: e.beta, gamma: e.gamma}; // Android absolute alpha is magnetic: correct to true north
   }
   function matrix(a,b,g){
     a*=R; b*=R; g*=R;
@@ -90,6 +105,14 @@ function createAR(opts){
       const [a,b] = dayBounds(Y,m,d,tz); poly(path(a,b), 'rgba(200,210,235,.7)', 1.5, [6,5]);
       const n = sunPos(solarNoon(a,b,lat,lon),lat,lon); label(proj(n.az, n.alt+3), lbl, 'rgba(220,226,245,.9)', 12);
     }
+    // celestial pole: in the north this is Polaris. Its height above the horizon equals your latitude.
+    const pole = lat >= 0 ? [0, lat] : [180, -lat], pq = proj(...pole);
+    if (pq){
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(pq[0],pq[1],9,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pq[0]-14,pq[1]); ctx.lineTo(pq[0]-5,pq[1]); ctx.moveTo(pq[0]+5,pq[1]); ctx.lineTo(pq[0]+14,pq[1]);
+      ctx.moveTo(pq[0],pq[1]-14); ctx.lineTo(pq[0],pq[1]-5); ctx.moveTo(pq[0],pq[1]+5); ctx.lineTo(pq[0],pq[1]+14); ctx.stroke();
+      label([pq[0], pq[1]-24], lat >= 0 ? `Polaris · ${lat.toFixed(1)}° up` : `South celestial pole · ${(-lat).toFixed(1)}° up`, '#fff', 12, true);
+    }
     poly(path(t0,t1), C.path, 3);
     const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
     for (let x=Math.ceil(t0/3600000)*3600000; x<t1; x+=3600000){
@@ -112,7 +135,8 @@ function createAR(opts){
     ctx.moveTo(cx-28,cy); ctx.lineTo(cx+28,cy); ctx.moveTo(cx,cy-28); ctx.lineTo(cx,cy+28); ctx.stroke();
     const [paz, palt] = azAltOf(c);
     const taz = (paz - cal.dAz + 360) % 360, talt = palt - cal.dAlt;
-    $('arRead').textContent = `${taz.toFixed(1)}° true ${dirName(taz)} · ${talt>=0?'+':''}${talt.toFixed(1)}°` + ((cal.dAz||cal.dAlt) ? ' · aligned' : '');
+    const where = talt < -75 ? 'Pointing at the ground' : talt > 75 ? 'Pointing straight up' : `${taz.toFixed(1)}° true ${dirName(taz)}`;
+    $('arRead').textContent = `${where} · ${talt>=0?'+':''}${talt.toFixed(1)}°` + ((cal.dAz||cal.dAlt) ? ' · aligned' : '');
   }
   const DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   const dirName = a => DIRS[Math.round(a/22.5)%16];

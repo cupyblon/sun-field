@@ -8,7 +8,8 @@ const HOME = {lat:41.8228, lon:-87.8517, place:'Brookfield, IL (village center)'
 const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const colors = () => ({fg:cssv('--fg'),muted:cssv('--muted'),line:cssv('--domeline'),grid:cssv('--grid'),ground:cssv('--ground'),path:cssv('--path'),
   season:cssv('--season'),rise:cssv('--rise'),set:cssv('--set'),sun:cssv('--sun'),sunEdge:cssv('--sun-edge'),sunLine:cssv('--path'),
-  shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font')});
+  shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font'),
+  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo')});
 
 const S = {
   lat: store.get('lat', HOME.lat), lon: store.get('lon', HOME.lon), place: store.get('place', HOME.place),
@@ -48,7 +49,10 @@ function phaseOf(alt){
 }
 
 // ---------- views ----------
-const dome = createDome($('dome'), colors);
+const dome = createDome($('dome'), colors, store.get('domeLayers', {}));
+buildLayerPanel($('layerPanel'), dome, l => store.set('domeLayers', l));
+$('layersBtn').addEventListener('click', () => { const open = $('layerPanel').hidden; $('layerPanel').hidden = !open; $('layersBtn').setAttribute('aria-expanded', open); });
+$('dome').addEventListener('pointerdown', () => { $('layerPanel').hidden = true; $('layersBtn').setAttribute('aria-expanded', false); });
 const ar = createAR({getState: state, colors, store, toast});
 let map = null, mapLayer = null;
 

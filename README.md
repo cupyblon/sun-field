@@ -7,3 +7,7 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 **Use it:** open the GitHub Pages link in Safari on iPhone, then Share > Add to Home Screen.
 
 **Camera view:** tap Start, allow Motion and Camera. Phone compasses drift 5-10 degrees, so on a sunny day put the crosshair on the sun (do not stare at it) and tap Align to sun.
+
+## v2
+- Dome **Layers** button: horizon grid, celestial grid with the celestial poles (Polaris), full sphere with the sun's night path, season paths, bearings, hour labels. Choices are remembered.
+- Camera view: steadier compass on iPhone (no more flipping when you look down) and a Polaris marker.
