@@ -23,3 +23,10 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Moon path hour labels, moonrise/moonset bearings.
 - Planets, bright stars and the Big Dipper on the Dome (Layers) and in Camera.
 - Sky today page, Times banner and 30-day 'Coming up in the sky' list: moon phases, supermoons, seasons, meteor peaks (IMO), eclipses computed for your location, Moon-planet conjunctions.
+
+## v7 (Oct 31, 2026): backend review fixes
+- Works offline: a service worker keeps the app and recently viewed map tiles on the phone. Bump `VERSION` in `sw.js` and the `?v=N` tags in `index.html` together on each release.
+- Camera turns off when you leave the Camera tab or lock the phone; Camera tab caches its sky math and shares `motion.js` with the live Dome.
+- Milky Way window shows tonight's window; lunar eclipse notes say when it's actually watchable.
+- Faster date changes and sky list (same results, checked against the previous version).
+- Leaflet bundled in `vendor/`; time zone setting for spots outside the phone's zone; one shared `DELTA_T`.

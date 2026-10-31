@@ -1,5 +1,6 @@
 /* Sun engine: NOAA solar position, Meeus seasons. Shared by every view. */
 const R = Math.PI/180, D = 180/Math.PI;
+const DELTA_T = 69;  // seconds, TT minus UT (good for the late 2020s); shared by the sun, moon and planet engines
 function sunCore(ms){
   const jd = ms/86400000 + 2440587.5, T = (jd-2451545)/36525;
   const L0 = ((280.46646 + T*(36000.76983 + T*0.0003032))%360+360)%360;
@@ -51,7 +52,9 @@ function dayBounds(Y,M,Dd,tz){
   return [t0, localToUtc(nd.getUTCFullYear(), nd.getUTCMonth()+1, nd.getUTCDate(),0,0,tz)];
 }
 function crossings(t0, t1, lat, lon, h){
-  const f = t => sunPos(t,lat,lon).altGeo - h, step = 2*60000, rises=[], sets=[];
+  // 10-minute scan + bisection gives the same answers as a fine scan (the sun moves smoothly); near the poles the sun can
+  // skim a threshold briefly, so scan finer there
+  const f = t => sunPos(t,lat,lon).altGeo - h, step = (Math.abs(lat) > 60 ? 2 : 10)*60000, rises=[], sets=[];
   let a = t0, fa = f(a);
   while (a < t1){
     const b = Math.min(a+step, t1), fb = f(b);
@@ -80,8 +83,7 @@ function seasonInstant(year, target){
   const W = (35999.373*T - 2.47)*R, dl = 1 + 0.0334*Math.cos(W) + 0.0007*Math.cos(2*W);
   const Ssum = SEASON_TERMS.reduce((s,[A,B,C]) => s + A*Math.cos((B + C*T)*R), 0);
   const jde = jde0 + 0.00001*Ssum/dl;
-  const deltaT = 62.92 + 0.32217*(year-2000) + 0.005589*(year-2000)**2; // seconds, TT minus UT (NASA polynomial)
-  return (jde - 2440587.5)*86400000 - deltaT*1000;
+  return (jde - 2440587.5)*86400000 - DELTA_T*1000;
 }
 // golden/blue hour definitions (geometric altitude, degrees)
 const DEFS = {

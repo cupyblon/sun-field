@@ -69,8 +69,10 @@
   }
 
   // ---- filling the pages ----
+  // one slot per kind ("mrs", "ph", "mw"): keeps only the latest result, so the cache can't grow without limit
   const cache = {};
-  const memo = (key, fn) => (cache[key] && cache[key].k === key.split('|').slice(1).join('|')) ? cache[key].v : (cache[key] = {k: key.split('|').slice(1).join('|'), v: fn()}).v;
+  const memo = (key, fn) => { const [kind, ...rest] = key.split('|'), k = rest.join('|');
+    if (!cache[kind] || cache[kind].k !== k) cache[kind] = {k, v: fn()}; return cache[kind].v; };
   const fmtLenIn = v => v >= 12 ? `${(v/12).toFixed(2)} ft (${Math.floor(v/12)}′ ${(v%12).toFixed(1)}″)` : `${v.toFixed(1)} in`;
   const dateFmt = tz => new Intl.DateTimeFormat('en-US',{timeZone:tz,month:'numeric',day:'numeric',year:'2-digit'});
 
@@ -104,7 +106,7 @@
   let skyKey = '', skyTimer = null;
   function fillSky(){
     if (typeof skyEvents !== 'function') return;
-    const st = state(), {t0, t1, lat, lon, tz} = st, key = [t0, lat, lon].join(',');
+    const st = state(), {t0, t1, lat, lon, tz} = st, key = [t0, lat, lon, tz].join(',');
     if (key === skyKey) return; skyKey = key;
     clearTimeout(skyTimer);
     skyTimer = setTimeout(() => {

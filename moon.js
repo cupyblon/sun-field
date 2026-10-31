@@ -29,7 +29,6 @@ const MOON_B = [ // D, M, M', F, sin coeff for latitude (1e-6 deg)
  [0,0,3,-1,439],[2,0,2,1,422],[2,0,-3,-1,421],[2,1,-1,1,-366],[2,1,0,1,-351],[4,0,0,1,331],
  [2,-1,1,1,315],[2,-2,0,-1,302],[0,0,1,3,-283],[2,1,1,-1,-229],[1,1,0,-1,223],[1,1,0,1,223]];
 
-const DELTA_T = 69;  // seconds, TT minus UT (good for the late 2020s)
 const norm360 = x => ((x % 360) + 360) % 360;
 
 // geocentric ecliptic longitude/latitude (deg) and distance (km) at UTC milliseconds
@@ -132,16 +131,21 @@ function mwCorePos(ms, lat, lon){
   return {az, alt: alt + refraction(alt)};
 }
 // tonight's window: core above the horizon while the sky is astronomically dark (sun below -18)
+// "tonight" = from midday of the selected date to midday of the next, so a summer window that runs past
+// midnight is shown as this evening's, not as the tail end from the night before
 function mwWindow(t0, t1, lat, lon){
   const ok = t => mwCorePos(t,lat,lon).alt > 0 && sunPos(t,lat,lon).altGeo < -18;
-  let start = null, end = null, prev = ok(t0);
-  if (prev) start = t0;
-  for (let t=t0+20000; t<=t1+12*3600000; t+=20000){     // 20-second steps, run into the next morning
+  const from = t0 + 12*3600000, to = t1 + 12*3600000;
+  let start = null, end = null, prev = ok(from);
+  if (prev) start = from;
+  const edge = (a, b, va) => { for (let k=0;k<12;k++){ const m=(a+b)/2; if (ok(m) === va) a=m; else b=m; } return b; };  // to the second
+  for (let t=from+60000; t<=to; t+=60000){                // 1-minute scan, then pin each edge down by bisection
     const now = ok(t);
-    if (now && !prev && start === null) start = t;
-    if (!now && prev && start !== null){ end = t; break; }
+    if (now && !prev && start === null) start = edge(t-60000, t, false);
+    if (!now && prev && start !== null){ end = edge(t-60000, t, true); break; }
     prev = now;
   }
+  if (start !== null && end === null) end = to;
   let best = null;
   if (start !== null && end !== null){
     for (let t=start; t<=end; t+=5*60000){ const p = mwCorePos(t,lat,lon); if (!best || p.alt > best.alt) best = {...p, t}; }

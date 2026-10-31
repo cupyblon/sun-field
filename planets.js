@@ -39,7 +39,7 @@ function ecl2eqDate(lamDeg, betaDeg, T){   // ecliptic of date -> equatorial of 
   return [ra, dec];
 }
 function planetPos(name, ms, lat, lon){
-  const T = ((ms + 69000)/86400000 + 2440587.5 - 2451545)/36525;
+  const T = ((ms + DELTA_T*1000)/86400000 + 2440587.5 - 2451545)/36525;
   const E = helio('Earth', T);
   let P = helio(name, T), g = P.map((v,i) => v - E[i]), dist = Math.hypot(...g);
   P = helio(name, T - dist*0.0057755/36525); g = P.map((v,i) => v - E[i]); dist = Math.hypot(...g);  // light-time

@@ -1,4 +1,4 @@
-/* Sun Field app shell: shared state, times list, timeline, tabs, map. Needs sun.js, dome.js, ar.js. */
+/* Sun Field app shell: shared state, times list, timeline, tabs, map. Needs sun.js, dome.js, motion.js, ar.js. */
 const $ = id => document.getElementById(id);
 const store = {
   get(k, d){ try { const v = localStorage.getItem('sf-'+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
@@ -11,9 +11,12 @@ const colors = () => ({fg:cssv('--fg'),muted:cssv('--muted'),line:cssv('--domeli
   shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font'),
   altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star')});
 
+// time zone: the phone's own, unless one is picked in Settings (for a spot in another zone)
+const DEVICE_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago';
+const validTz = z => { try { new Intl.DateTimeFormat('en-US',{timeZone:z}); return true; } catch(e){ return false; } };
 const S = {
   lat: store.get('lat', HOME.lat), lon: store.get('lon', HOME.lon), place: store.get('place', HOME.place),
-  tz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago',
+  tz: (store.get('tz','') && validTz(store.get('tz',''))) ? store.get('tz','') : DEVICE_TZ,
   mode: store.get('mode', 'ss'), heightIn: store.get('heightIn', 36), decl: store.get('decl', -4.1),
   view: store.get('view', 'times'), Y:0, M:0, D:0, minute:0, live:true
 };
@@ -53,7 +56,8 @@ const dome = createDome($('dome'), colors, store.get('domeLayers', {}));
 buildLayerPanel($('layerPanel'), dome, l => store.set('domeLayers', l));
 $('layersBtn').addEventListener('click', () => { const open = $('layerPanel').hidden; $('layerPanel').hidden = !open; $('layersBtn').setAttribute('aria-expanded', open); });
 $('dome').addEventListener('pointerdown', () => { $('layerPanel').hidden = true; $('layersBtn').setAttribute('aria-expanded', false); });
-const ar = createAR({getState: state, colors, store, toast});
+const motion = createMotion({getDecl: () => S.decl});          // one set of sensors, shared by the live Dome and the Camera
+const ar = createAR({getState: state, colors, store, toast, motion});
 let map = null, mapLayer = null;
 
 function render(){
@@ -64,7 +68,7 @@ function render(){
   $('sRise').textContent = ev.sun.rise ? `${fmtT(ev.sun.rise,tz)}\n${sunPos(ev.sun.rise,lat,lon).az.toFixed(1)}°` : '—';
   $('sSet').textContent  = ev.sun.set  ? `${fmtT(ev.sun.set,tz)}\n${sunPos(ev.sun.set,lat,lon).az.toFixed(1)}°` : '—';
   $('timeLabel').textContent = fmtT(t,tz);
-  $('placeLabel').textContent = S.place;
+  $('placeLabel').textContent = S.place + (S.tz !== DEVICE_TZ ? ` · ${tzAbbr(t, S.tz)}` : '');
   drawTimeline(st);
   if (S.view === 'times') renderTimes(st);
   if (S.view === 'dome') dome.draw(st);
@@ -190,6 +194,18 @@ $('homeBtn').addEventListener('click', () => { setLocation(HOME.lat, HOME.lon, H
 for (const id of ['lat','lon']) $(id).addEventListener('change', () => { const la=+$('lat').value, lo=+$('lon').value;
   if (la>=-90&&la<=90&&lo>=-180&&lo<=180) setLocation(la, lo, 'Custom spot'); else toast('Latitude −90 to 90, longitude −180 to 180'); });
 $('height').addEventListener('change', e => { const v=+e.target.value; if (v>0){ S.heightIn=v; store.set('heightIn',v); render(); } });
+// ---------- time zone setting ----------
+function tzAbbr(ms, tz){ const p = new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date(ms)).find(x=>x.type==='timeZoneName'); return p ? p.value : tz; }
+(function(){
+  const sel = $('tz'); if (!sel) return;
+  const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['America/New_York','America/Chicago','America/Denver','America/Phoenix','America/Los_Angeles','America/Anchorage','Pacific/Honolulu','UTC'];
+  sel.innerHTML = `<option value="">Phone's zone (${DEVICE_TZ.replace(/_/g,' ')})</option>` + zones.map(z => `<option value="${z}">${z.replace(/_/g,' ')}</option>`).join('');
+  sel.value = S.tz === DEVICE_TZ ? '' : S.tz;
+  sel.addEventListener('change', () => {
+    const z = sel.value; store.set('tz', z); S.tz = z || DEVICE_TZ; renderTimes.key = '';
+    if (S.live) setNow(); render(); toast(z ? `Times now in ${z.replace(/_/g,' ')}` : "Times back to your phone's zone");
+  });
+})();
 $('decl').addEventListener('change', e => { const v=+e.target.value; if (isFinite(v)){ S.decl=v; store.set('decl',v); } });
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { S.mode=b.dataset.mode; store.set('mode',S.mode); render(); }));
 
@@ -219,7 +235,6 @@ document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click
 document.querySelectorAll('[data-dv]').forEach(b => b.addEventListener('click', () => dome.setView(b.dataset.dv)));
 
 // ---------- live motion dome: the dome turns with the phone; Freeze holds the view ----------
-const motion = createMotion({getDecl: () => S.decl});
 const DIRS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 const wrapDeg = x => ((x % 360) + 540) % 360 - 180;
 let domeLive = false, vYaw = null, vPitch = null;
@@ -265,10 +280,18 @@ $('infoToggle').addEventListener('click', () => setInfo($('sunInfo').hidden));
 setInfo(store.get('infoShown', true));
 
 // keep "now" ticking while live
-setInterval(() => { if (S.live){ setNow(); render(); } }, 30000);
+setInterval(() => { if (S.live && !document.hidden){ setNow(); render(); } }, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.live){ setNow(); render(); } });
 new ResizeObserver(() => render()).observe($('tl'));
 
 // ---------- boot ----------
 $('lat').value = S.lat; $('lon').value = S.lon; $('height').value = S.heightIn; $('decl').value = S.decl;
 setNow(); show(S.view);
+
+// ---------- offline: keep a copy of the app on the phone so it opens with no signal ----------
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  const hadOne = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  let told = false;         // first install: offline is ready; later: a new version is saved for next time
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!told){ told = true; toast(hadOne ? 'Sun Field updated' : 'Saved to your phone · works offline'); } });
+}

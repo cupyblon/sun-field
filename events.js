@@ -56,6 +56,7 @@ function shadowGeom(ms){
 function lunarEclipses(from, to, lat, lon){
   const out = [];
   for (const full of phaseTimes(180, from - 86400000, to)){
+    if (Math.abs(moonEcliptic(full).beta) > 1.8) continue;         // too far from the shadow: no eclipse this month
     let best = null; for (let t=full-6*3600000; t<=full+6*3600000; t+=60000){ const g = shadowGeom(t); if (!best || g.d < best.g.d) best = {t, g}; }
     if (best.g.pmag <= 0) continue;
     // refine greatest eclipse to the second
@@ -69,11 +70,18 @@ function lunarEclipses(from, to, lat, lon){
     const [parStart, parEnd] = contact(t => shadowGeom(t).umag);
     const [totStart, totEnd] = contact(t => shadowGeom(t).umag - 1);
     const type = g.umag >= 1 ? 'Total' : g.umag > 0 ? 'Partial' : 'Penumbral';
-    // visible from here: Moon above the horizon at greatest eclipse, or during the main (or penumbral) phase
-    const s = parStart || penStart, e = parEnd || penEnd; let up = 0, n = 0;
-    for (let t=s; t<=e; t+=5*60000){ n++; if (moonPos(t,lat,lon).altTopo > 0) up++; }
+    // watchable from here: Moon above the horizon and the Sun below it, during the main (or penumbral) phase
+    const s = parStart || penStart, e = parEnd || penEnd, step = 2*60000;
+    const canSee = t => moonPos(t,lat,lon).altTopo > 0 && sunPos(t,lat,lon).altGeo < -0.833;
+    let up = 0, n = 0, seeFrom = null, seeTo = null, why = '';
+    for (let t=s; t<=e; t+=step){ n++; if (canSee(t)){ up++; if (seeFrom === null) seeFrom = t; seeTo = t; } }
+    if (up && up < n){                                         // say why part of it is missed: Sun up, or Moon below the horizon
+      const atStart = seeFrom > s + step, atEnd = seeTo < e - step;
+      const sunUp = t => sunPos(t,lat,lon).altGeo >= -0.833;
+      why = [atStart ? (sunUp(s) ? 'after dark' : 'after moonrise') : '', atEnd ? (sunUp(e) ? 'until dawn' : 'until moonset') : ''].filter(Boolean).join(', ');
+    }
     out.push({kind:'lunar', type, t: tg, umag: g.umag, pmag: g.pmag, penStart, penEnd, parStart, parEnd, totStart, totEnd,
-              moonAltAtMax: moonPos(tg,lat,lon).alt, visibleFrac: n ? up/n : 0});
+              moonAltAtMax: moonPos(tg,lat,lon).alt, visibleFrac: n ? up/n : 0, seeFrom, seeTo: seeTo !== null ? Math.min(e, seeTo + step) : null, why});
   }
   return out;
 }
@@ -95,6 +103,7 @@ function overlapFrac(r1, r2, d){   // fraction of disc r1 covered by disc r2 at 
 function solarEclipsesLocal(from, to, lat, lon){
   const out = [];
   for (const nm of phaseTimes(0, from - 86400000, to)){
+    if (Math.abs(moonEcliptic(nm).beta) > 1.7) continue;           // beyond the eclipse limit: no solar eclipse anywhere
     let start=null, end=null, best=null;
     for (let t=nm-5*3600000; t<=nm+5*3600000; t+=30000){
       const e = solarLocal(t,lat,lon), on = e.mag > 0 && e.sunAlt > -0.833;
@@ -110,18 +119,19 @@ function solarEclipsesLocal(from, to, lat, lon){
 // ---- Moon-planet close approaches (geocentric separation under maxDeg) ----
 function angSep(ra1, d1, ra2, d2){ return Math.acos(Math.min(1, Math.sin(d1*R)*Math.sin(d2*R) + Math.cos(d1*R)*Math.cos(d2*R)*Math.cos((ra1-ra2)*R)))*D; }
 function moonPlanetConjunctions(from, to, lat, lon, maxDeg=4){
-  const out = [];
+  const out = [], step = 6*3600000, moon = [];   // the Moon moves ~3.3° per 6 h, so a sampled minimum is within ~1.7° of the true one
+  for (let t=from; t<=to; t+=step) moon.push(moonPos(t,lat,lon));
   for (const name of PLANETS){
     let prev = null, prev2 = null;
-    for (let t=from; t<=to; t+=2*3600000){
-      const m = moonPos(t,lat,lon), p = planetPos(name,t,lat,lon), s = angSep(m.ra, m.dec, p.ra, p.dec);
-      if (prev && prev2 && prev.s < prev2.s && prev.s <= s && prev.s < maxDeg){
-        let lo = prev.t - 2*3600000, hi = t;
+    for (let i=0, t=from; t<=to; i++, t+=step){
+      const m = moon[i], p = planetPos(name,t,lat,lon), s = angSep(m.ra, m.dec, p.ra, p.dec);
+      if (prev && prev2 && prev.s < prev2.s && prev.s <= s && prev.s < maxDeg + 2){
+        let lo = prev.t - step, hi = t;
         for (let k=0;k<30;k++){ const m1=lo+(hi-lo)/3, m2=hi-(hi-lo)/3;
           const f = x => { const a = moonPos(x,lat,lon), b = planetPos(name,x,lat,lon); return angSep(a.ra,a.dec,b.ra,b.dec); };
           if (f(m1) < f(m2)) hi = m2; else lo = m1; }
         const tc = (lo+hi)/2, a = moonPos(tc,lat,lon), b = planetPos(name,tc,lat,lon);
-        out.push({kind:'conj', name, t: tc, sep: angSep(a.ra,a.dec,b.ra,b.dec)});
+        const sep = angSep(a.ra,a.dec,b.ra,b.dec); if (sep < maxDeg) out.push({kind:'conj', name, t: tc, sep});
       }
       prev2 = prev; prev = {t, s};
     }
@@ -166,7 +176,7 @@ function skyEvents(from, to, lat, lon, tz){
     if (e.visibleFrac <= 0) continue;
     const span = e.type === 'Penumbral' ? `${ft(e.penStart)}–${ft(e.penEnd)}` : `partial ${ft(e.parStart)}–${ft(e.parEnd)}`;
     ev.push({t: e.t, kind:'eclipse', icon:'◐', major: e.type !== 'Penumbral', title: `${e.type} lunar eclipse`,
-      detail: `max ${ft(e.t)}${e.type==='Total' ? ` · total ${ft(e.totStart)}–${ft(e.totEnd)}` : ''} · ${span}${e.type==='Penumbral' ? ' · faint shading only' : ''}${e.visibleFrac < 1 ? ' · Moon low/sets during part of it' : ''}`});
+      detail: `max ${ft(e.t)}${e.type==='Total' ? ` · total ${ft(e.totStart)}–${ft(e.totEnd)}` : ''} · ${span}${e.type==='Penumbral' ? ' · faint shading only' : ''}${e.visibleFrac < 1 ? ` · watchable here ${ft(e.seeFrom)}–${ft(e.seeTo)}${e.why ? ` (${e.why})` : ''}` : ''}`});
   }
   for (const e of solarEclipsesLocal(from, to, lat, lon))
     ev.push({t: e.t, kind:'eclipse', icon:'◑', major: e.obscuration > 0.1, title: 'Partial solar eclipse',
