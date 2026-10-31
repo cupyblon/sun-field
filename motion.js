@@ -6,6 +6,8 @@
 function createMotion(opts){
   const getDecl = opts.getDecl || (() => 0);
   let ori = null, smooth = null, iosOffset = null, started = false;
+  // diagnostics: how many readings arrived, last compass value, whether we're running without true north
+  const stat = {events: 0, lastH: undefined, relative: false};
   const wrap = x => ((x % 360) + 540) % 360 - 180;
   const col = (m,i) => [m[0][i], m[1][i], m[2][i]];
   const azOf = v => ((Math.atan2(v[0], v[1])*D) + 360) % 360;
@@ -17,8 +19,10 @@ function createMotion(opts){
             [-cb*sg,            sb,    cb*cg]];
   }
   function onOrient(e, absolute){
-    if (e.alpha == null || e.beta == null || e.gamma == null) return;
+    if (e.alpha == null || e.beta == null || e.gamma == null) return;   // blocked sensors send empty events
+    stat.events++;
     const decl = getDecl(), H = e.webkitCompassHeading;
+    stat.lastH = H;
     if (typeof H === 'number' && H >= 0){
       const upright = e.beta > 50 && e.beta < 130 && Math.abs(e.gamma) < 40;
       if (upright){
@@ -28,11 +32,15 @@ function createMotion(opts){
       } else if (iosOffset === null){
         iosOffset = wrap((360 - (H + decl)) - e.alpha);
       }
+      stat.relative = false;
       ori = {alpha: e.alpha + iosOffset, beta: e.beta, gamma: e.gamma};
       return;
     }
-    if (!absolute && !e.absolute) return;
-    ori = {alpha: e.alpha - decl, beta: e.beta, gamma: e.gamma};
+    if (absolute || e.absolute){ stat.relative = false; ori = {alpha: e.alpha - decl, beta: e.beta, gamma: e.gamma}; return; }
+    // No compass yet (iPhone reports -1 or nothing until it settles): still follow the phone's motion,
+    // keeping the last known north correction if we had one, and flag that directions may be off.
+    stat.relative = iosOffset === null;
+    ori = {alpha: e.alpha + (iosOffset || 0), beta: e.beta, gamma: e.gamma};
   }
   async function start(){
     if (started) return;
@@ -52,12 +60,13 @@ function createMotion(opts){
     else for (const k of ['r','u','c']) smooth[k] = smooth[k].map((x,i)=> x*0.75 + raw[k][i]*0.25);
     return smooth;
   }
-  // Direction the phone "faces": the top edge when flat, the camera when upright, blended in between.
+  // Direction the phone "faces": the top edge when flat (screen up), the camera when upright, and the
+  // camera again when tipped back toward the sky (then the top edge points behind you, so it is subtracted).
   function facing(){
     const a = axes(); if (!a) return null;
-    const fx = a.u[0] + a.c[0], fy = a.u[1] + a.c[1];
+    const fx = a.c[0] - a.c[2]*a.u[0], fy = a.c[1] - a.c[2]*a.u[1];
     const camAlt = Math.asin(Math.max(-1, Math.min(1, a.c[2])))*D;
     return {heading: (Math.hypot(fx,fy) < 1e-3) ? null : azOf([fx,fy,0]), camAlt};
   }
-  return { start, axes, facing, get started(){ return started; } };
+  return { start, axes, facing, stat, get started(){ return started; } };
 }

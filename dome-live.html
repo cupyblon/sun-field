@@ -86,9 +86,15 @@ function frame(){
     viewPitch = viewPitch == null ? pitch : viewPitch + (pitch - viewPitch)*0.25;
     if (Date.now() - lastState > 1000){ dome.draw(state()); lastState = Date.now(); }
     dome.setCamera(viewYaw, viewPitch);
-    $('readout').innerHTML = `${viewYaw.toFixed(0)}° true ${DIRS[Math.round(viewYaw/22.5)%16]}<small>Live · tilt flat for top view, upright for side view</small>`;
+    $('readout').innerHTML = motion.stat.relative
+      ? `Following motion · compass not ready<small>Directions may be off until the compass settles (hold upright, move in a figure 8)</small>`
+      : `${viewYaw.toFixed(0)}° true ${DIRS[Math.round(viewYaw/22.5)%16]}<small>Live · tilt flat for top view, upright for side view</small>`;
   } else {
-    $('readout').innerHTML = `Waiting for compass…<small>Move the phone in a figure 8</small>`;
+    // say exactly what's missing, so we can tell a blocked sensor from a compass that hasn't settled
+    const s = motion.stat;
+    $('readout').innerHTML = s.events === 0
+      ? `No motion readings yet<small>${/Brave/i.test(navigator.userAgent) || navigator.brave ? 'Brave may be blocking sensors: tap the lion icon › turn Shields off for this site, then reload' : 'Check Motion & Orientation access, then reload'}</small>`
+      : `Waiting for compass… (${s.events} readings)<small>Move the phone in a figure 8</small>`;
   }
   requestAnimationFrame(frame);
 }
