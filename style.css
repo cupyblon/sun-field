@@ -96,7 +96,7 @@ td .sub{color:var(--muted);font-size:12px}
 /* v2: dome layer panel */
 .layers-btn{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:10px;z-index:501}
 .layers-btn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
-.layer-panel{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:52px;z-index:501;width:min(280px,calc(100% - 20px));
+.layer-panel{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:52px;z-index:501;max-height:calc(100% - 62px);overflow-y:auto;width:min(280px,calc(100% - 20px));
   background:rgba(18,23,37,.96);border:1px solid var(--line);border-radius:12px;padding:6px;display:grid;gap:2px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .layer{display:flex;gap:10px;align-items:flex-start;text-align:left;border:0;background:none;padding:9px 8px;border-radius:8px;cursor:pointer}
 .layer:active{background:var(--surface2)}
