@@ -18,3 +18,8 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 ## v5
 - Swipeable bottom strip: Sun, Twilight, Shadow (editable height), Moon, Moon phases, Milky Way.
 - Moon path and phase on the Dome (Layers > Moon path) and in Camera.
+
+## v6
+- Moon path hour labels, moonrise/moonset bearings.
+- Planets, bright stars and the Big Dipper on the Dome (Layers) and in Camera.
+- Sky today page, Times banner and 30-day 'Coming up in the sky' list: moon phases, supermoons, seasons, meteor peaks (IMO), eclipses computed for your location, Moon-planet conjunctions.
