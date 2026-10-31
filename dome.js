@@ -9,9 +9,10 @@ const DOME_LAYERS = [
   ['sphere',    'Full sphere',     'Below the ground, with the sun\'s night path'],
   ['seasons',   'Season paths',    'June solstice, equinox, December solstice'],
   ['bearings',  'Bearings',        'Sunrise, sunset and sun lines, plus the shadow'],
-  ['hours',     'Hour labels',     '8a, 9a, …']
+  ['hours',     'Hour labels',     '8a, 9a, …'],
+  ['moon',      'Moon path',       'Today\'s moon track and its phase']
 ];
-const DOME_DEFAULTS = {altaz:true, celestial:false, sphere:false, seasons:true, bearings:true, hours:true};
+const DOME_DEFAULTS = {altaz:true, celestial:false, sphere:false, seasons:true, bearings:true, hours:true, moon:true};
 
 function createDome(canvas, colors, initialLayers){
   let yaw = 180, pitch = 28, zoom = 1;          // yaw = compass direction the viewer faces; pitch = how far above the ground we look down from
@@ -63,6 +64,8 @@ function createDome(canvas, colors, initialLayers){
     const hourLbl = u => { const hr=+hf.format(new Date(u))%24; return hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p'; };
     const sunTrack = (a,b,step=5) => { const out=[]; for (let u=a;u<=b;u+=step*60000){ const p=sunPos(u,lat,lon); out.push([p.az,p.alt]); } return out; };
     const today = sunTrack(t0,t1);
+    const moonOn = layers.moon && typeof moonPos === 'function', moonCol = C.moon || '#c8d0e0';
+    const moonTrack = []; if (moonOn) for (let u=t0; u<=t1; u+=10*60000){ const m = moonPos(u,lat,lon); moonTrack.push([m.az, m.alt]); }
 
     // grids as az/alt polylines
     const altazRings = (keep) => { for (const alt of [-75,-60,-45,-30,-15,15,30,45,60,75]){ if (!keep(alt)) continue; const r=[]; for(let a=0;a<=360;a+=4) r.push([a,alt]); runs(r, any, C.altaz, alt%30?0.6:1); } };
@@ -77,6 +80,7 @@ function createDome(canvas, colors, initialLayers){
       if (layers.altaz){ altazRings(below); altazMeridians(-90, 0); }
       if (layers.celestial) celestial(below);
       runs(today, below, C.night, 2.4, [7,5]);
+      if (moonOn) runs(moonTrack, below, moonCol, 1.4, [2,4]);
       for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const p=sunPos(u,lat,lon); if (p.alt>=0) continue;
         dot(sky(p.az,p.alt),3.2,C.night); if (layers.hours) text(sky(p.az,p.alt-5), hourLbl(u), C.path, 11, 600); }
     }
@@ -102,6 +106,10 @@ function createDome(canvas, colors, initialLayers){
       }
     }
 
+    if (moonOn){
+      runs(moonTrack, above, moonCol, 1.8, [6,3]);
+      for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const m=moonPos(u,lat,lon); if (m.alt>0) dot(sky(m.az,m.alt),2.4,moonCol); }
+    }
     runs(today, above, C.path, 2.6);
     for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){
       const p=sunPos(u,lat,lon); if (p.alt<=0) continue;
@@ -135,6 +143,15 @@ function createDome(canvas, colors, initialLayers){
     } else if (full || p.alt > -12){
       dot(sky(p.az, p.alt), 9, C.below, C.sunEdge);
     }
+    if (moonOn){                                   // the Moon now, drawn with its real phase
+      const m = moonPos(t,lat,lon);
+      if (m.alt > 0 || full){
+        const [x,y] = S(sky(m.az, m.alt)), r = 9;
+        ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fillStyle = '#1b2033'; ctx.fill(); ctx.strokeStyle = moonCol; ctx.lineWidth = 1.2; ctx.stroke();
+        if (m.lit > 0.01){ ctx.fillStyle = '#dfe4ee'; ctx.fill(new Path2D(moonLitPath(m.lit, m.waxing, x, y, r))); }
+        text(sky(m.az, m.alt - 6), `Moon ${Math.round(m.lit*100)}%`, moonCol, 10.5, 600);
+      }
+    }
     dot(O, 4, C.fg);
   }
 
@@ -167,7 +184,7 @@ function createDome(canvas, colors, initialLayers){
 
 /* Builds the on/off layer panel. host = element to fill; onChange(layers) is called after each toggle. */
 function buildLayerPanel(host, dome, onChange){
-  host.innerHTML = DOME_LAYERS.map(([k,name,sub]) =>
+  host.innerHTML = DOME_LAYERS.filter(([k]) => k !== 'moon' || typeof moonPos === 'function').map(([k,name,sub]) =>
     `<button type="button" class="layer" data-k="${k}" aria-pressed="${dome.layers[k]}"><span class="tick" aria-hidden="true"></span><span><b>${name}</b><small>${sub}</small></span></button>`).join('');
   host.querySelectorAll('.layer').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.k, v = !dome.layers[k]; dome.setLayers({[k]: v}); b.setAttribute('aria-pressed', v); if (onChange) onChange(dome.layers);
