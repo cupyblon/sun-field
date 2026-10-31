@@ -158,6 +158,9 @@ function createDome(canvas, colors, initialLayers){
   return {
     draw, layers,
     setLayers(obj){ Object.assign(layers, obj); draw(); },
+    // aim the view directly (used by live motion): y = compass direction faced, p = degrees looking down from above
+    setCamera(y, p){ yaw = ((y % 360) + 360) % 360; pitch = Math.max(-30, Math.min(89, p)); draw(); },
+    getCamera(){ return {yaw, pitch}; },
     setView(name){ if (name==='top'){ pitch=89; yaw=0; } else if (name==='side'){ pitch=12; yaw=180; } else { pitch=28; yaw=180; zoom=1; } draw(); }
   };
 }
