@@ -31,6 +31,7 @@
         <div style="--c:#b9a7ff"><b>Milky Way core</b><span class="data" id="mwNow">—</span></div>
         <div style="--c:#7d6be0"><b>Dark-sky window</b><span class="data" id="mwWin">—</span></div>
       </div>
+      ${typeof skyEvents === 'function' ? '<div class="page skytoday" data-name="Sky today" id="skyToday"><span class="muted">Checking the sky…</span></div>' : ''}
     </div>
     <button type="button" class="pg-arrow prev" id="pgPrev" aria-label="Previous page">‹</button>
     <button type="button" class="pg-arrow next" id="pgNext" aria-label="Next page">›</button>
@@ -57,6 +58,15 @@
     shIn.hidden = true; shEdit.hidden = false; render(); };
   shIn.addEventListener('change', commit); shIn.addEventListener('blur', commit);
   shIn.addEventListener('keydown', e => { if (e.key === 'Enter') shIn.blur(); });
+
+  // ---- Times tab: today's highlight banner and a 30-day "coming up" list ----
+  const pad = document.querySelector('#view-times .pad');
+  if (pad && typeof skyEvents === 'function'){
+    const banner = document.createElement('div'); banner.className = 'sky-banner'; banner.id = 'skyBanner'; banner.hidden = true;
+    const card = document.createElement('div'); card.className = 'card'; card.innerHTML = '<h2>Coming up in the sky</h2><table><tbody id="skyList"><tr><td class="muted">Working it out…</td></tr></tbody></table><p class="muted small">Meteor peaks from the IMO calendar; eclipses calculated for your spot and checked against NASA. Times are local.</p>';
+    pad.insertBefore(banner, pad.firstChild);
+    const seg = pad.querySelector('.seg'); pad.insertBefore(card, seg ? seg.nextSibling : null);
+  }
 
   // ---- filling the pages ----
   const cache = {};
@@ -90,7 +100,34 @@
       ? `${fmtT(win.start,tz)} – ${fmtT(win.end,tz)}\nhighest +${win.best.alt.toFixed(0)}° @ ${win.best.az.toFixed(0)}°, ${fmtT(win.best.t,tz)}`
       : 'not visible tonight\n(core is up only in daylight)';
   }
+  // sky events: heavier, so computed once per day/place and a moment after the page settles
+  let skyKey = '', skyTimer = null;
+  function fillSky(){
+    if (typeof skyEvents !== 'function') return;
+    const st = state(), {t0, t1, lat, lon, tz} = st, key = [t0, lat, lon].join(',');
+    if (key === skyKey) return; skyKey = key;
+    clearTimeout(skyTimer);
+    skyTimer = setTimeout(() => {
+      const T = id => document.getElementById(id);
+      const df = new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',month:'short',day:'numeric'});
+      const tonight = skyEvents(t0, t1 + 12*3600000, lat, lon, tz);
+      const vis = planetsVisible(t0, t1, lat, lon);
+      const pl = [vis.evening.length ? `Evening: ${vis.evening.join(', ')}` : '', vis.morning.length ? `Before dawn: ${vis.morning.join(', ')}` : ''].filter(Boolean).join(' · ');
+      const rows = tonight.slice(0, 2).map(e => `<div class="sk-row"><span class="sk-ic">${e.icon}</span><span><b>${e.title}</b> <span class="muted">${e.detail}</span></span></div>`).join('');
+      T('skyToday').innerHTML = (rows || '<div class="sk-row"><span class="sk-ic">✓</span><span class="muted">Nothing special today or tonight</span></div>')
+        + `<div class="sk-row"><span class="sk-ic">🪐</span><span class="muted">${pl || 'No bright planets well placed tonight'}</span></div>`
+        + (tonight.length > 2 ? `<div class="sk-more muted">+${tonight.length-2} more in the Times tab</div>` : '');
+      const big = tonight.filter(e => e.major);
+      const banner = T('skyBanner');
+      if (banner){ banner.hidden = !big.length;
+        banner.innerHTML = big.map(e => `<div><span class="sk-ic">${e.icon}</span><span><b>${e.title}</b><br><span class="small">${e.detail}</span></span></div>`).join(''); }
+      const list = T('skyList');
+      if (list){ const month = skyEvents(t0, t0 + 30*86400000, lat, lon, tz);
+        list.innerHTML = month.length ? month.map(e => `<tr><td><span class="sk-ic">${e.icon}</span><b>${e.title}</b><div class="sub">${e.detail}</div></td><td class="t">${df.format(new Date(e.t))}</td></tr>`).join('')
+                                      : '<tr><td class="muted">Nothing notable in the next 30 days</td></tr>'; }
+    }, 150);
+  }
   const baseRender = render;
-  render = function(){ baseRender.apply(this, arguments); try { fill(); } catch(e){ console.error(e); } };
+  render = function(){ baseRender.apply(this, arguments); try { fill(); fillSky(); } catch(e){ console.error(e); } };
   render();
 })();

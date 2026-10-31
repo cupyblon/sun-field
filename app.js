@@ -9,7 +9,7 @@ const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n)
 const colors = () => ({fg:cssv('--fg'),muted:cssv('--muted'),line:cssv('--domeline'),grid:cssv('--grid'),ground:cssv('--ground'),path:cssv('--path'),
   season:cssv('--season'),rise:cssv('--rise'),set:cssv('--set'),sun:cssv('--sun'),sunEdge:cssv('--sun-edge'),sunLine:cssv('--path'),
   shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font'),
-  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo')});
+  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star')});
 
 const S = {
   lat: store.get('lat', HOME.lat), lon: store.get('lon', HOME.lon), place: store.get('place', HOME.place),

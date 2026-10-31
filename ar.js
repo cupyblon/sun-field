@@ -113,9 +113,13 @@ function createAR(opts){
       ctx.moveTo(pq[0],pq[1]-14); ctx.lineTo(pq[0],pq[1]-5); ctx.moveTo(pq[0],pq[1]+5); ctx.lineTo(pq[0],pq[1]+14); ctx.stroke();
       label([pq[0], pq[1]-24], lat >= 0 ? `Polaris · ${lat.toFixed(1)}° up` : `South celestial pole · ${(-lat).toFixed(1)}° up`, '#fff', 12, true);
     }
+    const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
     if (typeof moonPos === 'function'){              // the Moon's path and the Moon itself, with its phase
       const mp = []; for (let x=t0; x<=t1; x+=10*60000){ const m = moonPos(x,lat,lon); mp.push(m.alt > -1 ? proj(m.az, m.alt) : null); }
       poly(mp, 'rgba(210,218,235,.85)', 2, [7,4]);
+      if (typeof skyEvents === 'function') for (let x=Math.ceil(t0/3600000)*3600000; x<t1; x+=3600000){ const m = moonPos(x,lat,lon); if (m.alt <= -1) continue; const q = proj(m.az, m.alt); if (!q) continue;
+        ctx.beginPath(); ctx.arc(q[0],q[1],3,0,7); ctx.fillStyle='#dfe4ee'; ctx.fill();
+        const hr=+hf.format(new Date(x))%24; label([q[0],q[1]+14], hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p', '#dfe4ee', 11, true); }
       const m = moonPos(t,lat,lon), mq = proj(m.az, m.alt);
       if (mq && m.alt > -1){
         ctx.beginPath(); ctx.arc(mq[0],mq[1],14,0,7); ctx.fillStyle='rgba(27,32,51,.85)'; ctx.fill(); ctx.strokeStyle='#dfe4ee'; ctx.lineWidth=1.5; ctx.stroke();
@@ -123,8 +127,18 @@ function createAR(opts){
         label([mq[0], mq[1]+26], `Moon ${Math.round(m.lit*100)}%`, '#eef1f7', 12, true);
       }
     }
+    if (typeof planetPos === 'function'){             // bright stars, Big Dipper, planets
+      const pos = {}; for (const [n,ra,dec] of DIPPER) pos[n] = starPos(ra,dec,t,lat,lon);
+      for (const [a2,b2] of DIPPER_LINES){ const qa = proj(pos[a2].az,pos[a2].alt), qb = proj(pos[b2].az,pos[b2].alt); if (qa && qb) poly([qa,qb], 'rgba(200,215,255,.55)', 1.2); }
+      for (const n in pos){ const q = proj(pos[n].az,pos[n].alt); if (q){ ctx.beginPath(); ctx.arc(q[0],q[1],2.5,0,7); ctx.fillStyle='#dfe8ff'; ctx.fill(); } }
+      { const q = proj(pos.Dubhe.az, pos.Dubhe.alt); if (q) label([q[0], q[1]-14], 'Big Dipper', 'rgba(220,230,255,.9)', 11, true); }
+      for (const [n,ra,dec,mag] of STARS){ if (n === 'Polaris') continue; const s = starPos(ra,dec,t,lat,lon); if (s.alt < -1) continue; const q = proj(s.az,s.alt); if (!q) continue;
+        ctx.beginPath(); ctx.arc(q[0],q[1],Math.max(2,4-mag),0,7); ctx.fillStyle='#eef3ff'; ctx.fill(); label([q[0], q[1]+14], n, 'rgba(230,236,255,.9)', 11); }
+      for (const n of PLANETS){ const q2 = planetPos(n,t,lat,lon); if (q2.alt < -1) continue; const q = proj(q2.az,q2.alt); if (!q) continue;
+        ctx.beginPath(); ctx.arc(q[0],q[1],6,0,7); ctx.fillStyle=PLANET_STYLE[n]; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.stroke();
+        label([q[0], q[1]-16], n, PLANET_STYLE[n], 13, true); }
+    }
     poly(path(t0,t1), C.path, 3);
-    const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
     for (let x=Math.ceil(t0/3600000)*3600000; x<t1; x+=3600000){
       const p = sunPos(x,lat,lon); if (p.alt <= -1) continue; const q = proj(p.az,p.alt); if (!q) continue;
       ctx.beginPath(); ctx.arc(q[0],q[1],4,0,7); ctx.fillStyle=C.path; ctx.fill();

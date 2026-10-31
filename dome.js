@@ -10,9 +10,11 @@ const DOME_LAYERS = [
   ['seasons',   'Season paths',    'June solstice, equinox, December solstice'],
   ['bearings',  'Bearings',        'Sunrise, sunset and sun lines, plus the shadow'],
   ['hours',     'Hour labels',     '8a, 9a, …'],
-  ['moon',      'Moon path',       'Today\'s moon track and its phase']
+  ['moon',      'Moon path',       'Today\'s moon track and its phase'],
+  ['planets',   'Planets',         'Mercury, Venus, Mars, Jupiter, Saturn'],
+  ['stars',     'Bright stars',    'Brightest named stars and the Big Dipper']
 ];
-const DOME_DEFAULTS = {altaz:true, celestial:false, sphere:false, seasons:true, bearings:true, hours:true, moon:true};
+const DOME_DEFAULTS = {altaz:true, celestial:false, sphere:false, seasons:true, bearings:true, hours:true, moon:true, planets:true, stars:false};
 
 function createDome(canvas, colors, initialLayers){
   let yaw = 180, pitch = 28, zoom = 1;          // yaw = compass direction the viewer faces; pitch = how far above the ground we look down from
@@ -20,6 +22,8 @@ function createDome(canvas, colors, initialLayers){
   const layers = Object.assign({}, DOME_DEFAULTS, initialLayers || {});
   const pts = new Map();
   const ctx = canvas.getContext('2d');
+  const memo = new Map();   // per-day / per-minute results, so live motion redraws stay fast
+  const cached = (key, fn) => { if (!memo.has(key)){ if (memo.size > 40) memo.clear(); memo.set(key, fn()); } return memo.get(key); };
 
   function project(E, N, U){
     const y = yaw*R, p = pitch*R;
@@ -63,9 +67,11 @@ function createDome(canvas, colors, initialLayers){
     const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
     const hourLbl = u => { const hr=+hf.format(new Date(u))%24; return hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p'; };
     const sunTrack = (a,b,step=5) => { const out=[]; for (let u=a;u<=b;u+=step*60000){ const p=sunPos(u,lat,lon); out.push([p.az,p.alt]); } return out; };
-    const today = sunTrack(t0,t1);
+    const today = cached('st|'+t0+'|'+lat+'|'+lon, () => sunTrack(t0,t1));
     const moonOn = layers.moon && typeof moonPos === 'function', moonCol = C.moon || '#c8d0e0';
-    const moonTrack = []; if (moonOn) for (let u=t0; u<=t1; u+=10*60000){ const m = moonPos(u,lat,lon); moonTrack.push([m.az, m.alt]); }
+    const V6 = typeof skyEvents === 'function';   // newest features switch on with the events engine
+    const dayKey = `${t0}|${lat}|${lon}`;
+    const moonTrack = moonOn ? cached('mt|'+dayKey, () => { const a=[]; for (let u=t0; u<=t1; u+=10*60000){ const m = moonPos(u,lat,lon); a.push([m.az, m.alt]); } return a; }) : [];
 
     // grids as az/alt polylines
     const altazRings = (keep) => { for (const alt of [-75,-60,-45,-30,-15,15,30,45,60,75]){ if (!keep(alt)) continue; const r=[]; for(let a=0;a<=360;a+=4) r.push([a,alt]); runs(r, any, C.altaz, alt%30?0.6:1); } };
@@ -80,7 +86,9 @@ function createDome(canvas, colors, initialLayers){
       if (layers.altaz){ altazRings(below); altazMeridians(-90, 0); }
       if (layers.celestial) celestial(below);
       runs(today, below, C.night, 2.4, [7,5]);
-      if (moonOn) runs(moonTrack, below, moonCol, 1.4, [2,4]);
+      if (moonOn){ runs(moonTrack, below, moonCol, 1.4, [2,4]);
+        for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const m=moonPos(u,lat,lon); if (m.alt>0) continue;
+          dot(sky(m.az,m.alt),2.2,moonCol); if (layers.hours && V6) text(sky(m.az,m.alt-5), hourLbl(u), moonCol, 10, 600); } }
       for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const p=sunPos(u,lat,lon); if (p.alt>=0) continue;
         dot(sky(p.az,p.alt),3.2,C.night); if (layers.hours) text(sky(p.az,p.alt-5), hourLbl(u), C.path, 11, 600); }
     }
@@ -100,7 +108,7 @@ function createDome(canvas, colors, initialLayers){
 
     if (layers.seasons){
       for (const [m,d,lbl] of [[6,21,'Jun 21'],[3,20,'Equinox'],[12,21,'Dec 21']]){
-        const [a,b] = dayBounds(Y,m,d,tz); runs(sunTrack(a,b), above, C.season, 1.2, [5,4]);
+        const [a,b] = dayBounds(Y,m,d,tz); runs(cached(`ss|${Y}|${m}|${lat}|${lon}`, () => sunTrack(a,b)), above, C.season, 1.2, [5,4]);
         const lp = sunPos(solarNoon(a,b,lat,lon) + 4*3600000, lat, lon);
         if (lp.alt>0) text(sky(lp.az + (lat>=0 ? 9 : -9), lp.alt + (m===6 ? 6 : m===12 ? -6 : 0)), lbl, C.muted, 10, 600);
       }
@@ -108,7 +116,8 @@ function createDome(canvas, colors, initialLayers){
 
     if (moonOn){
       runs(moonTrack, above, moonCol, 1.8, [6,3]);
-      for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const m=moonPos(u,lat,lon); if (m.alt>0) dot(sky(m.az,m.alt),2.4,moonCol); }
+      for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const m=moonPos(u,lat,lon); if (m.alt<=0) continue;
+        dot(sky(m.az,m.alt),2.6,moonCol); if (layers.hours && V6) text(sky(m.az,m.alt-5), hourLbl(u), moonCol, 10, 600); }
     }
     runs(today, above, C.path, 2.6);
     for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){
@@ -128,6 +137,19 @@ function createDome(canvas, colors, initialLayers){
       if (np[1] >= 0 || full){ dot(sky(...np), 5, C.celes, C.fg); text(sky(np[0], np[1]+7), lat>=0 ? 'N pole · Polaris' : 'S pole', C.fg, 11, 700); }
       if (sp[1] >= 0 || full){ dot(sky(...sp), 5, C.celes, C.fg); text(sky(sp[0], sp[1]-7), lat>=0 ? 'S pole' : 'N pole', C.fg, 11, 700); }
     }
+    if (typeof planetPos === 'function'){
+      const vis = al => al > 0 || full;
+      if (layers.stars){
+        const pos = {}; for (const [n,ra,dec] of DIPPER) pos[n] = starPos(ra,dec,t,lat,lon);
+        for (const [a,b] of DIPPER_LINES) if (vis(pos[a].alt) && vis(pos[b].alt)) line([sky(pos[a].az,pos[a].alt), sky(pos[b].az,pos[b].alt)], (C.star || '#dfe8ff'), 1);
+        for (const n in pos) if (vis(pos[n].alt)) dot(sky(pos[n].az,pos[n].alt), 1.8, (C.star || '#dfe8ff'));
+        if (vis(pos.Dubhe.alt)) text(sky(pos.Dubhe.az, pos.Dubhe.alt+5), 'Big Dipper', C.muted, 10, 600);
+        for (const [n,ra,dec,mag] of STARS){ const s = starPos(ra,dec,t,lat,lon); if (!vis(s.alt)) continue;
+          dot(sky(s.az,s.alt), Math.max(1.6, 3.2 - mag*0.8), (C.star || '#dfe8ff')); text(sky(s.az, s.alt-4), n, C.muted, 9.5, 500); }
+      }
+      if (layers.planets) for (const n of PLANETS){ const q = planetPos(n,t,lat,lon); if (!vis(q.alt)) continue;
+        dot(sky(q.az,q.alt), 4.5, PLANET_STYLE[n], C.halo); text(sky(q.az, q.alt+5), n, PLANET_STYLE[n], 11, 700); }
+    }
     // current sun
     const p = sunPos(t,lat,lon);
     if (p.alt > 0){
@@ -144,7 +166,17 @@ function createDome(canvas, colors, initialLayers){
       dot(sky(p.az, p.alt), 9, C.below, C.sunEdge);
     }
     if (moonOn){                                   // the Moon now, drawn with its real phase
-      const m = moonPos(t,lat,lon);
+      const m = moonPos(t,lat,lon), mrs = cached('mrs|'+dayKey, () => moonCrossings(t0, t1, lat, lon));
+      if (layers.bearings && V6){
+        if (mrs.rise) line([O, sky(moonPos(mrs.rise,lat,lon).az,0)], moonCol, 1.6, [6,4]);
+        if (mrs.set)  line([O, sky(moonPos(mrs.set,lat,lon).az,0)], moonCol, 1.6, [6,4]);
+      }
+      if (V6 && m.alt <= 0 && !full){                    // tell where to look when the Moon is down
+        const next = cached('nr|'+Math.floor(t/60000)+'|'+lat+'|'+lon, () => { for (let u=t; u<t+36*3600000; u+=6*3600000){ const r = moonCrossings(u, u+6*3600000, lat, lon); if (r.rise && r.rise > t) return r.rise; } return null; });
+        if (next){ const na = moonPos(next,lat,lon).az, tzf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',minute:'2-digit'});
+          ctx.font = `600 12px ${C.font}`; ctx.textAlign='left'; ctx.fillStyle = moonCol;
+          ctx.fillText(`Moon is down · rises ${tzf.format(new Date(next))} at ${na.toFixed(0)}°`, 12, h - 40); }
+      }
       if (m.alt > 0 || full){
         const [x,y] = S(sky(m.az, m.alt)), r = 9;
         ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fillStyle = '#1b2033'; ctx.fill(); ctx.strokeStyle = moonCol; ctx.lineWidth = 1.2; ctx.stroke();
@@ -184,7 +216,8 @@ function createDome(canvas, colors, initialLayers){
 
 /* Builds the on/off layer panel. host = element to fill; onChange(layers) is called after each toggle. */
 function buildLayerPanel(host, dome, onChange){
-  host.innerHTML = DOME_LAYERS.filter(([k]) => k !== 'moon' || typeof moonPos === 'function').map(([k,name,sub]) =>
+  const have = k => k === 'moon' ? typeof moonPos === 'function' : (k === 'planets' || k === 'stars') ? typeof planetPos === 'function' : true;
+  host.innerHTML = DOME_LAYERS.filter(([k]) => have(k)).map(([k,name,sub]) =>
     `<button type="button" class="layer" data-k="${k}" aria-pressed="${dome.layers[k]}"><span class="tick" aria-hidden="true"></span><span><b>${name}</b><small>${sub}</small></span></button>`).join('');
   host.querySelectorAll('.layer').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.k, v = !dome.layers[k]; dome.setLayers({[k]: v}); b.setAttribute('aria-pressed', v); if (onChange) onChange(dome.layers);

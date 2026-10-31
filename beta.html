@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sun Field beta</title>
+<meta name="description" content="Sun position, light times, 3D sky dome, camera AR and map for any place.">
+<meta name="theme-color" content="#07090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sun Field">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css?v=8">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="place">
+      <strong>Sun Field <span class="muted small">beta</span></strong>
+      <span id="placeLabel" class="muted"></span>
+    </div>
+    <button type="button" id="locateBtn" class="chip">Locate</button>
+  </header>
+
+  <main class="views">
+    <!-- TIMES -->
+    <section id="view-times" class="view scroll" hidden>
+      <div class="pad">
+        <div class="work card">
+          <div class="label">Work light today</div>
+          <div class="work-row"><span id="workStart" class="big data">—</span><span class="muted">to</span><span id="workEnd" class="big data">—</span></div>
+          <div class="muted small" id="workNote">Civil dawn to civil dusk: enough natural light to work outside.</div>
+        </div>
+        <div class="seg" role="group" aria-label="Golden and blue hour definitions">
+          <button type="button" data-mode="ss">Sun Surveyor</button>
+          <button type="button" data-mode="classic">Classic</button>
+        </div>
+        <div class="card"><h2>Morning</h2><table><tbody id="am"></tbody></table></div>
+        <div class="card"><h2>Evening</h2><table><tbody id="pm"></tbody></table></div>
+        <div class="card"><h2>Day</h2><table><tbody id="day"></tbody></table></div>
+        <div class="card"><h2 id="seasonTitle">Solstices and equinoxes</h2><table><tbody id="seasons"></tbody></table></div>
+        <div class="card settings">
+          <h2>Settings</h2>
+          <div class="grid2">
+            <label>Latitude<input id="lat" type="number" step="0.0001" inputmode="decimal"></label>
+            <label>Longitude<input id="lon" type="number" step="0.0001" inputmode="decimal"></label>
+            <label>Object height (in)<input id="height" type="number" step="any" min="0" inputmode="decimal"></label>
+            <label>Magnetic declination (°)<input id="decl" type="number" step="0.1" inputmode="decimal"></label>
+          </div>
+          <p class="muted small">Declination: how far a compass is off from true north here. Brookfield is about −4.1° (west). Used by the AR view.</p>
+          <button type="button" id="homeBtn" class="chip">Reset to Brookfield</button>
+        </div>
+        <p class="muted small foot">Times drop the seconds, like Sun Surveyor. Calculated on your phone with the NOAA solar equations; nothing is sent anywhere.</p>
+      </div>
+    </section>
+
+    <!-- DOME -->
+    <section id="view-dome" class="view" hidden>
+      <canvas id="dome" aria-label="3D sky dome. Drag to spin, pinch to zoom."></canvas>
+      <div class="overlay-tl">
+        <button type="button" class="chip" data-dv="default">3D</button>
+        <button type="button" class="chip" data-dv="top">Top</button>
+        <button type="button" class="chip" data-dv="side">Side</button>
+      </div>
+      <button type="button" class="chip layers-btn" id="layersBtn" aria-expanded="false" aria-controls="layerPanel">Layers</button>
+      <div class="layer-panel" id="layerPanel" hidden></div>
+      <div class="dome-read" id="domeRead" hidden></div>
+      <button type="button" class="dome-live" id="domeLive" aria-pressed="false">Live</button>
+      <div class="overlay-bl muted small" id="domeHint">Drag to spin · pinch to zoom</div>
+    </section>
+
+    <!-- AR -->
+    <section id="view-ar" class="view ar" hidden>
+      <video id="arVideo" playsinline muted autoplay></video>
+      <canvas id="arCanvas"></canvas>
+      <div class="ar-read" id="arRead"></div>
+      <div class="ar-tools">
+        <button type="button" class="chip" id="arAlign">Align to sun</button>
+        <button type="button" class="chip" id="arReset">Reset</button>
+        <label class="chip fov">FOV <input id="arFov" type="range" min="45" max="90" step="1"></label>
+      </div>
+      <div class="ar-start" id="arStart">
+        <h2>Camera view</h2>
+        <p>Point your phone at the sky to see the sun's path over the camera. Hold it upright in portrait.</p>
+        <button type="button" id="arGo" class="big-btn">Start camera and compass</button>
+        <p class="muted small">Your phone will ask for camera and motion access. Video stays on your phone.</p>
+        <p class="muted small" id="arErr"></p>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section id="view-map" class="view" hidden>
+      <div id="map"></div>
+      <div class="overlay-bl small map-legend">
+        <span><i style="background:var(--rise)"></i>Sunrise</span>
+        <span><i style="background:var(--set)"></i>Sunset</span>
+        <span><i style="background:var(--path)"></i>Sun now</span>
+        <span><i style="background:var(--shadow)"></i>Shadow</span>
+        <span><i class="dash"></i>Jun / Dec</span>
+      </div>
+      <div class="overlay-tl small muted map-hint">Tap the map to move your spot</div>
+    </section>
+  </main>
+
+  <button type="button" class="info-toggle" id="infoToggle" aria-expanded="true" aria-controls="sunInfo"><span class="grip" aria-hidden="true"></span><span id="infoToggleText">Hide sun info</span></button>
+  <div id="sunInfo">
+  <section class="strip">
+    <div style="--c:var(--sun-edge)"><b>Sun</b><span class="data" id="sNow">—</span></div>
+    <div style="--c:var(--rise)"><b>Sunrise</b><span class="data" id="sRise">—</span></div>
+    <div style="--c:var(--set)"><b>Sunset</b><span class="data" id="sSet">—</span></div>
+  </section>
+
+  <section class="timebar">
+    <div class="time-row">
+      <input id="date" type="date" aria-label="Date">
+      <span id="timeLabel" class="data big-time">—</span>
+      <button type="button" id="nowBtn" class="chip">Now</button>
+    </div>
+    <canvas id="tl" aria-label="24-hour light timeline. Drag to set the time."></canvas>
+  </section>
+  </div>
+
+  <nav class="tabs">
+    <button type="button" data-view="times">Times</button>
+    <button type="button" data-view="dome">Dome</button>
+    <button type="button" data-view="ar">Camera</button>
+    <button type="button" data-view="map">Map</button>
+  </nav>
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="sun.js?v=8"></script>
+<script src="moon.js?v=8"></script>
+<script src="planets.js?v=8"></script>
+<script src="events.js?v=8"></script>
+<script src="dome.js?v=8"></script>
+<script src="motion.js?v=8"></script>
+<script src="ar.js?v=8"></script>
+<script src="app.js?v=8"></script>
+<script src="infopages.js?v=8"></script>
+</body>
+</html>

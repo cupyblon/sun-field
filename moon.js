@@ -78,7 +78,7 @@ function moonPos(ms, lat, lon){
   const elong = norm360(lam - sunLam);
   const psi = Math.acos(Math.cos(b)*Math.cos((lam - sunLam)*R));
   const i = Math.atan2(149598000*Math.sin(psi), dist - 149598000*Math.cos(psi));
-  return {az, altGeoc, altTopo, alt: altTopo + refraction(altTopo), par, dist, elong,
+  return {az, altGeoc, altTopo, alt: altTopo + refraction(altTopo), par, dist, elong, ra: norm360(ra*D), dec: dec*D,
           lit: (1 + Math.cos(i))/2, waxing: elong < 180};
 }
 
