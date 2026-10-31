@@ -211,11 +211,47 @@ function show(view){
   for (const v of ['times','dome','ar','map']) $('view-'+v).hidden = v !== view;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.view===view ? 'page' : 'false'));
   if (view === 'ar') ar.show(); else ar.hide();
+  if (view !== 'dome' && typeof setDomeLive === 'function' && domeLive) setDomeLive(false);
   if (view === 'map'){ initMap(); if (map) setTimeout(()=>{ map.invalidateSize(); map.setView([S.lat,S.lon]); renderMap(state()); }, 30); }
   render();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
 document.querySelectorAll('[data-dv]').forEach(b => b.addEventListener('click', () => dome.setView(b.dataset.dv)));
+
+// ---------- live motion dome: the dome turns with the phone; Freeze holds the view ----------
+const motion = createMotion({getDecl: () => S.decl});
+const DIRS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const wrapDeg = x => ((x % 360) + 540) % 360 - 180;
+let domeLive = false, vYaw = null, vPitch = null;
+function domeFrame(){
+  if (!domeLive) return;
+  const f = motion.facing(), s = motion.stat;
+  if (f && f.heading != null){
+    const pitch = Math.max(5, Math.min(89, -f.camAlt));
+    vYaw = vYaw == null ? f.heading : (vYaw + wrapDeg(f.heading - vYaw)*0.25 + 360) % 360;
+    vPitch = vPitch == null ? pitch : vPitch + (pitch - vPitch)*0.25;
+    dome.setCamera(vYaw, vPitch);
+    $('domeRead').innerHTML = s.relative
+      ? 'Following motion · compass not ready<small>Hold upright and move in a figure 8</small>'
+      : `${vYaw.toFixed(0)}° true ${DIRS16[Math.round(vYaw/22.5)%16]}<small>Flat = top view · upright = side view</small>`;
+  } else {
+    $('domeRead').innerHTML = s.events === 0
+      ? `No motion readings yet<small>${navigator.brave ? 'Brave blocks sensors: use Safari, or turn Shields off for this site' : 'Check Motion & Orientation access, then reload'}</small>`
+      : 'Waiting for compass…<small>Move the phone in a figure 8</small>';
+  }
+  requestAnimationFrame(domeFrame);
+}
+function setDomeLive(on){
+  domeLive = on;
+  $('domeLive').setAttribute('aria-pressed', on); $('domeLive').textContent = on ? 'Freeze' : 'Live';
+  $('domeRead').hidden = !on; $('domeHint').hidden = on;
+  if (on){ vYaw = null; vPitch = null; requestAnimationFrame(domeFrame); }
+}
+$('domeLive').addEventListener('click', async () => {
+  if (domeLive){ setDomeLive(false); toast('Frozen · drag to spin'); return; }
+  try { await motion.start(); setDomeLive(true); }
+  catch(err){ toast(err.message || 'Motion access is not available'); }
+});
 
 // keep "now" ticking while live
 setInterval(() => { if (S.live){ setNow(); render(); } }, 30000);

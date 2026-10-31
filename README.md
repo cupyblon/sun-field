@@ -11,3 +11,6 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 ## v2
 - Dome **Layers** button: horizon grid, celestial grid with the celestial poles (Polaris), full sphere with the sun's night path, season paths, bearings, hour labels. Choices are remembered.
 - Camera view: steadier compass on iPhone (no more flipping when you look down) and a Polaris marker.
+
+## v3
+- Dome tab **Live** button: the dome turns with your phone (facing direction = ahead; flat = top view, upright = side view). **Freeze** holds the view. Works in Safari; Brave Shields block phone sensors.

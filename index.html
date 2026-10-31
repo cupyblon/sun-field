@@ -68,7 +68,9 @@
       </div>
       <button type="button" class="chip layers-btn" id="layersBtn" aria-expanded="false" aria-controls="layerPanel">Layers</button>
       <div class="layer-panel" id="layerPanel" hidden></div>
-      <div class="overlay-bl muted small">Drag to spin · pinch to zoom</div>
+      <div class="dome-read" id="domeRead" hidden></div>
+      <button type="button" class="dome-live" id="domeLive" aria-pressed="false">Live</button>
+      <div class="overlay-bl muted small" id="domeHint">Drag to spin · pinch to zoom</div>
     </section>
 
     <!-- AR -->
@@ -131,6 +133,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="sun.js"></script>
 <script src="dome.js"></script>
+<script src="motion.js"></script>
 <script src="ar.js"></script>
 <script src="app.js"></script>
 </body>
