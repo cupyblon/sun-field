@@ -111,3 +111,10 @@ td .sub{color:var(--muted);font-size:12px}
 .dome-live[aria-pressed="true"]{background:#3ccf6e;color:#06210f}
 .dome-read{position:absolute;left:0;right:0;top:56px;text-align:center;font-family:var(--mono);font-size:15px;pointer-events:none;text-shadow:0 1px 3px #000;padding:0 12px}
 .dome-read small{display:block;color:var(--muted);font-family:var(--font);font-size:12px}
+
+/* v4: hide / show bottom sun info */
+.info-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-top:1px solid var(--line);
+  background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;padding:5px 0 6px;cursor:pointer}
+.info-toggle .grip{width:36px;height:4px;border-radius:2px;background:var(--line)}
+.info-toggle[aria-expanded="false"] .grip{background:var(--accent)}
+.info-toggle[aria-expanded="false"]{color:var(--accent)}

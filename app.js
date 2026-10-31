@@ -253,6 +253,17 @@ $('domeLive').addEventListener('click', async () => {
   catch(err){ toast(err.message || 'Motion access is not available'); }
 });
 
+// ---------- hide / show the bottom sun info (strip + date/time bar) ----------
+function setInfo(show){
+  $('sunInfo').hidden = !show; $('infoToggle').setAttribute('aria-expanded', show);
+  $('infoToggleText').textContent = show ? 'Hide sun info' : 'Show sun info';
+  store.set('infoShown', show);
+  if (map) setTimeout(()=>map.invalidateSize(), 50);
+  setTimeout(render, 30);
+}
+$('infoToggle').addEventListener('click', () => setInfo($('sunInfo').hidden));
+setInfo(store.get('infoShown', true));
+
 // keep "now" ticking while live
 setInterval(() => { if (S.live){ setNow(); render(); } }, 30000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.live){ setNow(); render(); } });
