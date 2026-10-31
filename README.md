@@ -14,3 +14,7 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 
 ## v3
 - Dome tab **Live** button: the dome turns with your phone (facing direction = ahead; flat = top view, upright = side view). **Freeze** holds the view. Works in Safari; Brave Shields block phone sensors.
+
+## v5
+- Swipeable bottom strip: Sun, Twilight, Shadow (editable height), Moon, Moon phases, Milky Way.
+- Moon path and phase on the Dome (Layers > Moon path) and in Camera.
