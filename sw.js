@@ -4,10 +4,10 @@
    - Map tiles: a saved tile shows at once and is refreshed quietly in the background; new tiles are saved as you
      view them (up to 400, oldest dropped first), so the area you use most works offline too.
    Bump VERSION (and the ?v=N tags in index.html) on every release. */
-const VERSION = 'v18';
+const VERSION = 'v19';
 const SCOPE = self.registration.scope;                 // each install location keeps its own copy (e.g. a test page)
 const APP_CACHE = `sf-app-${VERSION}-${SCOPE}`, TILE_CACHE = 'sf-tiles', MAX_TILES = 400;
-const V = '?v=18';
+const V = '?v=19';
 const FILES = ['./', 'index.html', 'style.css'+V, 'vendor/leaflet.css'+V, 'vendor/leaflet.js'+V,
   'sun.js'+V, 'moon.js'+V, 'planets.js'+V, 'events.js'+V, 'dome.js'+V, 'motion.js'+V, 'ar.js'+V, 'app.js'+V, 'infopages.js'+V, 'vendor/magvar.js'+V, 'sheets.js'+V,
   'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
@@ -33,18 +33,32 @@ async function appFile(req){
   if (res.ok){ const cache = await caches.open(APP_CACHE); cache.put(req, res.clone()); }
   return res;
 }
-let trimming = null;                                    // one trim at a time, a few seconds after tiles stop arriving
+// Keep the tile store at MAX_TILES: one trim at a time, a few seconds after tiles stop arriving.
+// Tiles saved while a trim runs set `again`, so a final pass always follows a burst.
+let trimming = null, again = false;
 function trimTiles(){
-  if (!trimming) trimming = new Promise(r => setTimeout(r, 3000)).then(async () => {
-    const cache = await caches.open(TILE_CACHE), keys = await cache.keys();
-    for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]);
-  }).finally(() => { trimming = null; });
+  if (trimming){ again = true; return trimming; }
+  trimming = (async () => {
+    do {
+      again = false;
+      await new Promise(r => setTimeout(r, 3000));
+      const cache = await caches.open(TILE_CACHE), keys = await cache.keys();
+      for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]);
+    } while (again);
+  })().finally(() => { trimming = null; });
   return trimming;
 }
 async function tile(e, req){
-  const cache = await caches.open(TILE_CACHE), hit = await cache.match(req);
-  const fresh = fetch(req).then(async res => { if (res.ok || res.type === 'opaque'){ await cache.put(req, res.clone()); e.waitUntil(trimTiles()); } return res; });
-  if (hit){ e.waitUntil(fresh.catch(() => {})); return hit; }          // saved tile now, refresh in the background
+  const cache = await caches.open(TILE_CACHE);
+  // fetch and save the tile; this is registered with waitUntil straight away (hit or miss), so the save and the
+  // trim finish even if the response below was already given up on after 8 s
+  const fresh = fetch(req).then(async res => {
+    if (res.ok || res.type === 'opaque'){ await cache.put(req, res.clone()); await trimTiles(); }
+    return res;
+  });
+  e.waitUntil(fresh.then(() => {}, () => {}));
+  const hit = await cache.match(req);
+  if (hit) return hit;                                                   // saved tile now, refreshed in the background
   try { return await timeout(fresh, 8000); } catch(err){ return Response.error(); }
 }
 self.addEventListener('fetch', e => {

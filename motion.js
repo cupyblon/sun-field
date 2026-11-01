@@ -51,22 +51,24 @@ function createMotion(opts){
     const now = performance.now(); recent.push([now, e.alpha, e.beta, e.gamma]); while (recent.length && now - recent[0][0] > 1500) recent.shift();
     if (typeof H === 'number' && H >= 0){
       const upright = e.beta > 50 && e.beta < 130 && Math.abs(e.gamma) < 40;
+      // iosOffset turns the gyro's arbitrary zero into MAGNETIC north; true north = that minus the declination,
+      // applied fresh on every reading so a new spot or a typed declination takes effect at once, even after a pause
       if (upright){
         const camAz = azOf(col(matrix(e.alpha, e.beta, e.gamma), 2).map(x=>-x));
-        const target = wrap(camAz - (H + decl));
+        const target = wrap(camAz - H);
         iosOffset = iosOffset === null ? target : wrap(iosOffset + wrap(target - iosOffset)*0.05);
       } else if (iosOffset === null){
-        iosOffset = wrap((360 - (H + decl)) - e.alpha);
+        iosOffset = wrap((360 - H) - e.alpha);
       }
       stat.relative = false;
-      ori = {alpha: e.alpha + iosOffset, beta: e.beta, gamma: e.gamma};
+      ori = {alpha: e.alpha + iosOffset - decl, beta: e.beta, gamma: e.gamma};
       return;
     }
     if (absolute || e.absolute){ stat.relative = false; ori = {alpha: e.alpha - decl, beta: e.beta, gamma: e.gamma}; return; }
     // No compass yet (iPhone reports -1 or nothing until it settles): still follow the phone's motion,
     // keeping the last known north correction if we had one, and flag that directions may be off.
     stat.relative = iosOffset === null;
-    ori = {alpha: e.alpha + (iosOffset || 0), beta: e.beta, gamma: e.gamma};
+    ori = {alpha: e.alpha + (iosOffset === null ? 0 : iosOffset - decl), beta: e.beta, gamma: e.gamma};
   }
   async function start(){
     if (granted) return;

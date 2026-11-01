@@ -58,6 +58,12 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Timeline bar and the dome's celestial grid are drawn once and reused.
 - Dead code and CSS removed, comments brought up to date. Details: `docs/code-review-2026-11-01.md`.
 
+## v12 (Nov 1, 2026): second-review fixes
+- Map tile saving kept alive on slow first visits; the tile store always gets a final trim after a burst.
+- iPhone: a changed compass offset (new spot or typed value) applies at once, even after pausing Live or the Camera.
+- Clearer privacy wording (GitHub hosting and OpenStreetMap map images see your IP address).
+- New tests: offline Map, and the iPhone pause/offset check.
+
 ## How accurate is it?
 
 Everything is calculated on the device. Each engine was checked against an independent source:
