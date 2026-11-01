@@ -6,7 +6,7 @@
    Run from the repo folder:   node tests/run.js        (plain Node 18+, nothing to install)
    Exit code 0 = all passed, 1 = something failed. Each failure prints what was expected and what came out. */
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const root = path.join(__dirname, '..'), read = f => fs.readFileSync(path.join(root, f), 'utf8');
+const root = process.env.SUNFIELD_DIR ? path.resolve(process.env.SUNFIELD_DIR) : path.join(__dirname, '..'), read = f => fs.readFileSync(path.join(root, f), 'utf8');
 
 // load the engines exactly as the browser does, into one shared scope
 const ctx = {Intl, Math, Date, console, Map, Set, Object, Array, JSON, Number, String, isFinite, performance};
@@ -17,7 +17,7 @@ const sunPos = E('sunPos'), moonPos = E('moonPos'), planetPos = E('planetPos'), 
   moonCrossings = E('moonCrossings'), dayBounds = E('dayBounds'), phaseTimes = E('phaseTimes'), seasonInstant = E('seasonInstant'),
   sunLonJ2000 = E('sunLonJ2000'), localToUtc = E('localToUtc'), lunarEclipses = E('lunarEclipses'), solarEclipsesLocal = E('solarEclipsesLocal'),
   magDeclination = ctx.magDeclination;
-const REF = JSON.parse(read('tests/reference.json'));
+const REF = JSON.parse(fs.readFileSync(path.join(__dirname, 'reference.json'), 'utf8'));
 
 // ---------- tiny test harness ----------
 const groups = []; let cur;
