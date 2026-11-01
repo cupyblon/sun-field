@@ -68,6 +68,7 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - First visit: welcome with "Use my location" on top of How to use.
 - About: Support Sun Field (Lightning, Bitcoin with QR codes, Cash App, Venmo) and Send feedback by email.
 - Golden/blue hour modes renamed Extended / Classic.
+- Guided tour (7 steps) after the first How to use; replay from How to use.
 
 ## How accurate is it?
 

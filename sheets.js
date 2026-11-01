@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '22';
+  const APP_VERSION = '23';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;
@@ -178,6 +178,7 @@
   // ---------- first visit: welcome + location, with How to use underneath ----------
   const seen = store.get('seenVersion', null);
   if (seen === null && !store.get('welcomed', false)){
+    window.sfFirstVisit = true;                         // tour.js starts the guided tour when this sheet closes
     setTimeout(() => { $('welcome').hidden = false; aboutTab('howto'); openSheet('aboutSheet'); }, 500);
     const done = () => { store.set('welcomed', true); $('welcome').hidden = true; };
     $('welcomeSkip').addEventListener('click', () => { done(); toast('Showing Brookfield, IL · tap Locate any time'); });
