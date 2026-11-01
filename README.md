@@ -2,11 +2,11 @@
 
 A phone-first sun app: light times (including civil "work light"), a 3D sky dome, a camera AR view of the sun's path, and a map with sunrise, sunset and shadow bearings.
 
-Everything is calculated on the device with the NOAA solar equations (solstices and equinoxes with Meeus). Nothing is sent anywhere; location stays in your browser.
+All the math runs on the device: NOAA solar equations, Meeus for the moon and seasons, NOAA's World Magnetic Model for compass offset. Your location stays in your browser. Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view.
 
-**Use it:** open the GitHub Pages link in Safari on iPhone, then Share > Add to Home Screen.
+**Use it:** https://cupyblon.github.io/sun-field/ in Safari (iPhone) or Chrome (Android), then Add to Home Screen. Works offline after the first visit.
 
-**Camera view:** tap Start, allow Motion and Camera. Phone compasses drift 5-10 degrees, so on a sunny day put the crosshair on the sun (do not stare at it) and tap Align to sun.
+**Camera view:** tap Start, allow Motion and Camera. Phone compasses drift 5-10 degrees, so tap Calibrate, then put the crosshair on the sun (do not stare at it), or the moon or a bright planet at night, and tap Align.
 
 **Docs:** [How this project was built (retrospective and playbook)](docs/project-retrospective.md) · [Code review, Nov 1 2026](docs/code-review-2026-11-01.md)
 
