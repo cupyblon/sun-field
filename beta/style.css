@@ -267,3 +267,16 @@ li[data-state="ok"] #ckSkyGo{display:none}
 .welcome .row-btns{align-items:center;margin-bottom:8px}
 .fb-btn{display:inline-block;text-decoration:none;margin:2px 0 8px}
 .beta-tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--bg);background:var(--accent);border-radius:4px;padding:1px 5px;vertical-align:2px}
+
+/* v13: Support Sun Field */
+.support{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:4px 0 14px;background:var(--bg)}
+.support h3{margin:0 0 6px;font-size:16px}
+.support p{margin:0 0 8px}
+.tip-list{list-style:none;margin:6px 0 8px;padding:0;display:grid;gap:10px}
+.tip-list li{display:grid;grid-template-columns:28px 1fr;gap:4px 10px;align-items:start}
+.tip-list li>span:nth-child(2){display:grid;min-width:0}
+.tip-list .data{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.tip-list .row-btns{grid-column:2}
+.tip-list .chip{text-decoration:none;color:var(--fg);padding:5px 10px;font-size:12.5px}
+.tip-ic{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800;color:var(--accent)}
+.qr{grid-column:2;background:#fff;border-radius:8px;padding:0;max-width:220px;height:auto}

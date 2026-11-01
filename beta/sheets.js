@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '21';
+  const APP_VERSION = '22';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;
@@ -159,6 +159,21 @@
     const body = `What worked:\n\nWhat was confusing:\n\nWhat didn't work:\n\n---\nSun Field version ${APP_VERSION} · ${device} · ${browser}`;
     location.href = `mailto:${to}?subject=${encodeURIComponent('Sun Field feedback')}&body=${encodeURIComponent(body)}`;
   });
+
+  // ---------- Support: copy an address, show or hide a QR code ----------
+  async function copyText(text){
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch(e){                                          // older browsers: copy through a hidden text box
+      const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch(_){} t.remove(); return ok;
+    }
+  }
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    toast(await copyText(b.dataset.copy) ? `${b.dataset.what} copied` : `Copy didn't work: ${b.dataset.copy}`);
+  }));
+  document.querySelectorAll('[data-qr]').forEach(b => b.addEventListener('click', () => {
+    const img = $(b.dataset.qr), show = img.hidden; img.hidden = !show; b.setAttribute('aria-expanded', show); b.textContent = show ? 'Hide QR' : 'QR';
+  }));
 
   // ---------- first visit: welcome + location, with How to use underneath ----------
   const seen = store.get('seenVersion', null);
