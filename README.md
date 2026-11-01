@@ -68,3 +68,17 @@ Everything is calculated on the device. Each engine was checked against an indep
 - **Meteor rates** are best-case estimates for a dark sky; city light cuts them a lot.
 - **Planet math** uses JPL elements valid 1800–2050; the clock correction (ΔT) is set for the late 2020s.
 - **Time zone** follows your phone unless you pick another one in Settings.
+
+## Testing
+
+Two checks, run from the repo folder:
+
+- `node tests/run.js` checks the math against independent answers (about 980 checks, plain Node, nothing to install):
+  sunrise, sunset and twilight in six places from the equator to above the Arctic Circle (including midnight sun and polar night),
+  moonrise and moonset, sun, moon, planet and star positions, moon phases, equinoxes and solstices, meteor-peak timing,
+  NASA lunar and solar eclipses, NOAA magnetic declination, daylight-saving and leap days, and that every release version number matches.
+  The reference answers come from PyEphem and pygeomag (`tests/make_reference.py` rebuilds them).
+- `node tests/offline-check.js` runs the offline and update sequence in a headless browser: open online, reopen offline,
+  publish a new version, reopen online (must show it), reopen offline (must still work). Needs Playwright.
+
+To release: `python3 tools/release.py` bumps every version number and runs the math checks.
