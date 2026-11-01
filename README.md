@@ -10,6 +10,16 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 
 **Docs:** [How this project was built (retrospective and playbook)](docs/project-retrospective.md) · [Code review, Nov 1 2026](docs/code-review-2026-11-01.md)
 
+## Release history
+
+**About version numbers:** from app version 24 on, release notes use the **app version** shown in ⓘ › About (it is also the
+`?v=N` number the offline copy uses). The older notes below are labelled v2–v14; those were release counts, not app versions.
+v14 below is app version 23.
+
+## App version 24 (Nov 1, 2026): tour accessibility, tour test
+- Guided tour: keyboard focus returns to the Times tab when it ends (to ⓘ after a replay); the app behind it is inert while it runs.
+- New `tests/tour-check.js`: first-visit welcome and the full tour, online and offline.
+
 ## v2
 - Dome **Layers** button: horizon grid, celestial grid with the celestial poles (Polaris), full sphere with the sun's night path, season paths, bearings, hour labels. Choices are remembered.
 - Camera view: steadier compass on iPhone (no more flipping when you look down) and a Polaris marker.
@@ -70,7 +80,9 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 - First visit: welcome with "Use my location" on top of How to use.
 - About: Support Sun Field (Lightning, Bitcoin with QR codes, Cash App, Venmo) and Send feedback by email.
 - Golden/blue hour modes renamed Extended / Classic.
-- Guided tour (7 steps) after the first How to use; replay from How to use.
+
+## v14 (Nov 1, 2026) = app version 23: guided tour
+- Guided tour (7 steps) after the first How to use: spotlights each real screen; Skip or Escape any time; replay with "Take the tour" in How to use.
 
 ## How accurate is it?
 
@@ -109,6 +121,8 @@ Two checks, run from the repo folder:
   publish a new version, reopen online (must show it), reopen offline (must still work), open the Map offline. Needs Playwright.
 - `node tests/motion-check.js` simulates iPhone compass readings: learn north, pause, change the compass offset, resume tilted;
   the heading must use the new offset at once. Needs Playwright.
+- `node tests/tour-check.js` runs the first-visit welcome and all 7 tour steps, replay, Skip and Escape, online and with no network;
+  checks the app behind the tour is inert and focus returns afterwards. Needs Playwright.
 - Not covered by automated tests: saved map tiles under heavy use, and real phone sensors (check those on the phones).
 
 To release: `python3 tools/release.py` bumps every version number and runs the math checks.

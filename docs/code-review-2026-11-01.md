@@ -82,3 +82,14 @@ An independent source-code review of v18 agreed with the speed and cleanup chang
 Agreed with the reviewer and left unchanged: the unbounded formatter cache, the dome cache, oldest-first tile eviction, and the current file structure (C11 dropped).
 
 **What the automated tests do not cover:** saved map tiles under heavy use, and real phone sensors. Those need real-device checks: the Calibrate → Align flow, and Live after changing location while paused.
+
+## Third review (ChatGPT): guided tour, app version 24
+
+An independent review of the guided tour (app version 23) found no functional defects and four improvements. All four were made in app version 24.
+
+| # | Finding | Fix | How it was checked |
+|---|---|---|---|
+| 1 | Keyboard focus was not returned when the tour ended. | Focus goes to the Times tab after the tour, or to ⓘ after a replay. | `tests/tour-check.js` |
+| 2 | The app behind the tour was not marked inert, so assistive technology could still reach it. | The `.app` container is set `inert` while the tour runs (the tour sits outside it). | `tests/tour-check.js`, all 7 steps |
+| 3 | No automated tour test. | New `tests/tour-check.js`: welcome, all 7 steps, Done, no repeat after reload, replay, Escape, Skip, then the first-visit flow again with no network. It fails on app version 23 and passes on 24. | Run on both versions |
+| 4 | README release labels (v2–v14) didn't match the app version (23). | One number from now on: the app version. The older labels are explained in the README. | README |

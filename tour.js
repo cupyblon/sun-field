@@ -35,7 +35,8 @@
     </div>`;
   document.body.appendChild(root);
   const spot = root.querySelector('.tour-spot'), card = root.querySelector('.tour-card'), arrow = root.querySelector('.tour-arrow');
-  let i = -1;
+  let i = -1, replay = false;
+  const app = document.querySelector('.app');            // everything behind the tour; made inert while it runs
 
   function place(){
     const s = STEPS[i], el = document.querySelector(s.target); if (!el) return;
@@ -61,15 +62,21 @@
     $('tourNext').textContent = i === STEPS.length - 1 ? 'Done' : 'Next';
     setTimeout(() => { place(); $('tourNext').focus(); }, s.view === 'map' ? 450 : 120);   // let the screen (and the map) settle
   }
-  function start(){
+  function start(fromReplay){
     if (!root.hidden) return;
+    replay = !!fromReplay;
     if ($('sunInfo').hidden) setInfo(true);              // the light bar and info pages are part of the tour
+    if (app) app.inert = true;                           // screen readers, taps and Tab can't reach the app behind the tour
     root.hidden = false; document.body.classList.add('touring'); go(0);
   }
   function end(finished){
     root.hidden = true; document.body.classList.remove('touring'); store.set('toured', true);
+    if (app) app.inert = false;
     document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('tour-tab'));
     show('times');                                       // always finish at home
+    // put keyboard focus somewhere useful: back on ⓘ after a replay, on the Times tab after the first tour
+    const back = replay ? $('aboutBtn') : document.querySelector('.tabs button[data-view="times"]');
+    if (back) back.focus();
     if (finished) toast("You're all set. ⓘ has help any time.");
   }
   $('tourNext').addEventListener('click', () => i < STEPS.length - 1 ? go(i + 1) : end(true));
@@ -87,5 +94,5 @@
   }).observe($('aboutSheet'), {attributes: true, attributeFilter: ['hidden']});
   // "Take the tour" in How to use
   const again = $('tourAgain');
-  if (again) again.addEventListener('click', () => { $('aboutSheet').hidden = true; document.body.classList.remove('sheet-open'); setTimeout(start, 300); });
+  if (again) again.addEventListener('click', () => { $('aboutSheet').hidden = true; document.body.classList.remove('sheet-open'); setTimeout(() => start(true), 300); });
 })();

@@ -54,13 +54,15 @@ Android, desktop, a Big text mode, compass calibration, and About and help pages
 
 **Lesson:** every new device or audience surfaces hidden assumptions; an iPhone-only error message was one.
 
-### 8. Outside review (twice)
+### 8. Outside review (three rounds)
 The first ChatGPT review pushed toward automated tests and simpler calibration. The second found a map-tile caching gap, plus an iPhone compass issue: after a pause and a location change, the heading was **18.9° off** until the phone was held upright.
 
-**Lesson:** a second reviewer sees what the builder doesn't. Each review caught things the other missed.
+A third review, of the guided tour, found two accessibility gaps (focus not returned, the app behind the tour not blocked) and asked for a tour test. The new test failed on the old version and passed on the fix.
+
+**Lesson:** a second reviewer sees what the builder doesn't. Each review caught things the others missed.
 
 ### 9. Make quality repeatable
-- **Tests:** 980+ automated checks against PyEphem, NASA eclipse tables and NOAA's World Magnetic Model; an offline/update check; an iPhone compass check; a release script.
+- **Tests:** 980+ automated checks against PyEphem, NASA eclipse tables and NOAA's World Magnetic Model; an offline/update check; an iPhone compass check; a welcome-and-tour check; a release script.
 - **Proof the tests work:** a deliberately planted bug made 90 checks fail.
 - **A mistake fixed for good:** forgetting to bump the version once left a phone on a stale copy. The release script and a version-consistency test now prevent it.
 
