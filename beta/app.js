@@ -56,7 +56,7 @@ const dome = createDome($('dome'), colors, store.get('domeLayers', {}));
 buildLayerPanel($('layerPanel'), dome, l => store.set('domeLayers', l));
 $('layersBtn').addEventListener('click', () => { const open = $('layerPanel').hidden; $('layerPanel').hidden = !open; $('layersBtn').setAttribute('aria-expanded', open); });
 $('dome').addEventListener('pointerdown', () => { $('layerPanel').hidden = true; $('layersBtn').setAttribute('aria-expanded', false); });
-const motion = createMotion({getDecl: () => S.decl});          // one set of sensors, shared by the live Dome and the Camera
+const motion = createMotion({getDecl: () => S.decl, store});          // one set of sensors, shared by the live Dome and the Camera
 const ar = createAR({getState: state, colors, store, toast, motion});
 let map = null, mapLayer = null;
 
@@ -244,13 +244,14 @@ function domeFrame(){
   if (!domeLive) return;
   const f = motion.facing(), s = motion.stat;
   if (f && f.heading != null){
-    const pitch = Math.max(5, Math.min(89, -f.camAlt));
-    vYaw = vYaw == null ? f.heading : (vYaw + wrapDeg(f.heading - vYaw)*0.25 + 360) % 360;
+    const cal = motion.cal, heading = (f.heading - cal.dAz + 360) % 360;   // same correction as the Camera's Align
+    const pitch = Math.max(5, Math.min(89, -(f.camAlt - cal.dAlt)));
+    vYaw = vYaw == null ? heading : (vYaw + wrapDeg(heading - vYaw)*0.25 + 360) % 360;
     vPitch = vPitch == null ? pitch : vPitch + (pitch - vPitch)*0.25;
     dome.setCamera(vYaw, vPitch);
     $('domeRead').innerHTML = s.relative
       ? 'Following motion · compass not ready<small>Hold upright and move in a figure 8</small>'
-      : `${vYaw.toFixed(0)}° true ${DIRS16[Math.round(vYaw/22.5)%16]}<small>Flat = top view · upright = side view</small>`;
+      : `${vYaw.toFixed(0)}° true ${DIRS16[Math.round(vYaw/22.5)%16]}<small>${motion.cal.on ? `Aligned on ${motion.cal.on}` : 'Flat = top view · upright = side view'}</small>`;
   } else {
     $('domeRead').innerHTML = s.events === 0
       ? `No motion readings yet<small>${sensorHelp()}</small>`
@@ -265,7 +266,7 @@ function setDomeLive(on){
   if (on){ vYaw = null; vPitch = null; requestAnimationFrame(domeFrame); }
 }
 if (NO_SENSORS){
-  $('domeLive').hidden = true;
+  $('domeLive').hidden = true; $('domeCal').hidden = true;
   $('arGo').hidden = true;
   $('arStart').querySelector('p').textContent = 'Live view and the Camera overlay need a phone or tablet with a compass. On this computer, use Times, Dome (drag to spin) and Map.';
   $('arStart').querySelector('.muted').hidden = true;
