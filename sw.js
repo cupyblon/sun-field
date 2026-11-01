@@ -1,12 +1,13 @@
 /* Sun Field offline support. Keeps a copy of the app on the phone so it opens with no signal.
    - The page itself: try the network first (so updates show up), fall back to the saved copy after 4 s or offline.
    - App files (versioned with ?v=N): served from the saved copy; a new version number means new files.
-   - Map tiles: saved as you view them (up to 400), so the area you use most works offline too.
+   - Map tiles: a saved tile shows at once and is refreshed quietly in the background; new tiles are saved as you
+     view them (up to 400, oldest dropped first), so the area you use most works offline too.
    Bump VERSION (and the ?v=N tags in index.html) on every release. */
-const VERSION = 'v16';
+const VERSION = 'v18';
 const SCOPE = self.registration.scope;                 // each install location keeps its own copy (e.g. a test page)
 const APP_CACHE = `sf-app-${VERSION}-${SCOPE}`, TILE_CACHE = 'sf-tiles', MAX_TILES = 400;
-const V = '?v=16';
+const V = '?v=18';
 const FILES = ['./', 'index.html', 'style.css'+V, 'vendor/leaflet.css'+V, 'vendor/leaflet.js'+V,
   'sun.js'+V, 'moon.js'+V, 'planets.js'+V, 'events.js'+V, 'dome.js'+V, 'motion.js'+V, 'ar.js'+V, 'app.js'+V, 'infopages.js'+V, 'vendor/magvar.js'+V, 'sheets.js'+V,
   'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
@@ -32,19 +33,24 @@ async function appFile(req){
   if (res.ok){ const cache = await caches.open(APP_CACHE); cache.put(req, res.clone()); }
   return res;
 }
-async function tile(req){
-  const cache = await caches.open(TILE_CACHE);
-  try {
-    const res = await timeout(fetch(req), 5000);
-    if (res.ok || res.type === 'opaque'){ await cache.put(req, res.clone());
-      const keys = await cache.keys(); for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]); }
-    return res;
-  } catch(e){ return (await cache.match(req)) || Response.error(); }
+let trimming = null;                                    // one trim at a time, a few seconds after tiles stop arriving
+function trimTiles(){
+  if (!trimming) trimming = new Promise(r => setTimeout(r, 3000)).then(async () => {
+    const cache = await caches.open(TILE_CACHE), keys = await cache.keys();
+    for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]);
+  }).finally(() => { trimming = null; });
+  return trimming;
+}
+async function tile(e, req){
+  const cache = await caches.open(TILE_CACHE), hit = await cache.match(req);
+  const fresh = fetch(req).then(async res => { if (res.ok || res.type === 'opaque'){ await cache.put(req, res.clone()); e.waitUntil(trimTiles()); } return res; });
+  if (hit){ e.waitUntil(fresh.catch(() => {})); return hit; }          // saved tile now, refresh in the background
+  try { return await timeout(fresh, 8000); } catch(err){ return Response.error(); }
 }
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (req.mode === 'navigate' && url.origin === location.origin) e.respondWith(page(req));
-  else if (url.hostname === 'tile.openstreetmap.org') e.respondWith(tile(req));
+  else if (url.hostname === 'tile.openstreetmap.org') e.respondWith(tile(e, req));
   else if (url.origin === location.origin) e.respondWith(appFile(req));
 });

@@ -48,14 +48,6 @@ function planetPos(name, ms, lat, lon){
   const [ra, dec] = ecl2eqDate(lam, beta, T);
   return {name, lam, beta, dist, ra, dec, ...eq2altaz(ms, ra, dec, lat, lon)};
 }
-function planetCrossings(name, t0, t1, lat, lon){
-  const f = t => planetPos(name,t,lat,lon).altGeo + 0.5667, step = 20*60000, rises=[], sets=[];
-  let a=t0, fa=f(a);
-  while (a < t1){ const b=Math.min(a+step,t1), fb=f(b);
-    if ((fa<0)!==(fb<0)){ let lo=a, hi=b, flo=fa; for (let k=0;k<22;k++){ const m=(lo+hi)/2, fm=f(m); if ((fm<0)===(flo<0)){lo=m;flo=fm;} else hi=m; } (fa<0?rises:sets).push((lo+hi)/2); }
-    a=b; fa=fb; }
-  return {rise: rises[0] ?? null, set: sets[0] ?? null};
-}
 const PLANETS = ['Mercury','Venus','Mars','Jupiter','Saturn'];
 
 // ---------- bright stars (J2000 RA/Dec, degrees; magnitude) ----------

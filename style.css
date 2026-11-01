@@ -2,7 +2,7 @@
 :root{
   --bg:#07090f; --surface:#121725; --surface2:#1a2032; --fg:#e7ebf5; --muted:#97a2bf; --line:#283150;
   --accent:#f2a54a; --path:#ffb52e; --season:#5d6683; --rise:#f08a2c; --set:#e0453a;
-  --sun:#ffe08a; --sun-edge:#f2a840; --shadow:#b4bdd6; --north:#e0453a; --below:#4a5270;
+  --sun:#ffe08a; --moon:#c8d0e0; --sun-edge:#f2a840; --shadow:#b4bdd6; --north:#e0453a; --below:#4a5270;
   --grid:#5a1d1d; --ground:#0f131d; --domeline:#7d6a2c;
   --altaz:#4a5068; --celes:#9b2a2a; --nightpath:#2f4fd8; --halo:rgba(7,9,15,.75); --star:#dfe8ff;
   --night:#0a0f22; --astro:#232860; --naut:#34338a; --civil:#5b56c4; --blue:#2f6fb8; --gap:#c9715a; --gold:#f2a840; --day:#ffd76a;
@@ -76,11 +76,7 @@ td .sub{color:var(--muted);font-size:12px}
 .hour-lbl{font:600 11px var(--font);color:var(--path);text-shadow:0 0 3px #000,0 0 3px #000;white-space:nowrap}
 .leaflet-container{font-family:var(--font)}
 
-.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line)}
-.strip>div{padding:7px 12px 8px;border-top:3px solid var(--c);display:flex;flex-direction:column;min-width:0}
-.strip>div+div{border-left:1px solid var(--line)}
-.strip b{font-size:12.5px}
-.strip .data{font-size:13px;line-height:1.35;white-space:pre-line}
+.strip{background:var(--surface);border-top:1px solid var(--line)}
 .timebar{background:var(--surface);padding:6px max(12px,env(safe-area-inset-right,0px)) 6px max(12px,env(safe-area-inset-left,0px));border-top:1px solid var(--line)}
 .time-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
 .time-row input{font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
@@ -91,7 +87,6 @@ td .sub{color:var(--muted);font-size:12px}
 .tabs button{border:0;background:none;padding:11px 0 12px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
 .tabs button[aria-current="page"]{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(200px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;z-index:2000}
-@media (min-width:900px){ .strip .data{white-space:normal} }
 
 /* v2: dome layer panel */
 .layers-btn{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:10px;z-index:501}
@@ -121,9 +116,8 @@ td .sub{color:var(--muted);font-size:12px}
 
 /* v5: swipeable info pages (active only when infopages.js turns the strip into pages) */
 .strip.pages{display:block;position:relative}
-.strip.pages>.pager{display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:0;border:0;-webkit-overflow-scrolling:touch}
+.strip.pages>.pager{display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .strip.pages>.pager::-webkit-scrollbar{display:none}
-.strip.pages>div+div{border-left:0}
 .page{flex:0 0 100%;min-width:0;scroll-snap-align:start;height:94px}
 .page.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .page.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -149,7 +143,7 @@ td .sub{color:var(--muted);font-size:12px}
 .pg-arrow{position:absolute;top:50%;transform:translateY(-60%);border:0;background:none;color:var(--muted);font-size:22px;line-height:1;padding:6px 3px;cursor:pointer;z-index:2}
 .pg-arrow.prev{left:0} .pg-arrow.next{right:0}
 .pg-arrow:disabled{opacity:.15;cursor:default}
-.strip.pages>.dots{display:flex;flex-direction:row;justify-content:center;gap:7px;padding:3px 0 5px;border:0}
+.strip.pages>.dots{display:flex;flex-direction:row;justify-content:center;gap:7px;padding:3px 0 5px}
 .dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer}
 .dots button[aria-selected="true"]{background:var(--accent)}
 
@@ -177,9 +171,9 @@ td .sub{color:var(--muted);font-size:12px}
   .big-info .size-toggle{font-size:18px;padding:3px 15px;border-radius:12px}
   /* info pages: text 2.5x; the panel grows to fit it */
   .big-info .page{height:auto}
-  .big-info .strip>div,.big-info .page.cols3>div,.big-info .page.cols2>div{padding:10px 18px 12px;border-top-width:4.5px}
-  .big-info .strip b,.big-info .page b{font-size:31px}
-  .big-info .strip .data,.big-info .page .data{font-size:33px}
+  .big-info .page.cols3>div,.big-info .page.cols2>div{padding:10px 18px 12px;border-top-width:4.5px}
+  .big-info .page b{font-size:31px}
+  .big-info .page .data{font-size:33px}
   .big-info .page.twi{padding:12px 18px;column-gap:12px;row-gap:6px;border-top-width:4.5px}
   .big-info .page.twi b{font-size:30px}
   .big-info .page.twi .rl{font-size:31px}

@@ -9,7 +9,7 @@ const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n)
 const colors = () => ({fg:cssv('--fg'),muted:cssv('--muted'),line:cssv('--domeline'),grid:cssv('--grid'),ground:cssv('--ground'),path:cssv('--path'),
   season:cssv('--season'),rise:cssv('--rise'),set:cssv('--set'),sun:cssv('--sun'),sunEdge:cssv('--sun-edge'),sunLine:cssv('--path'),
   shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font'),
-  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star')});
+  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star'),moon:cssv('--moon')});
 
 // time zone: the phone's own, unless one is picked in Settings (for a spot in another zone)
 const DEVICE_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago';
@@ -32,7 +32,7 @@ function state(){
   return {t, t0:D_.ev.t0, t1:D_.ev.t1, lat:S.lat, lon:S.lon, Y:S.Y, tz:S.tz, decl:S.decl, ev:D_.ev};
 }
 function setNow(){
-  const p={}; new Intl.DateTimeFormat('en-US',{timeZone:S.tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+  const p={}; dtf({timeZone:S.tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
     .formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
   S.Y=+p.year; S.M=+p.month; S.D=+p.day; S.minute=(+p.hour)*60+(+p.minute); S.live = true;
   $('date').value = `${p.year}-${p.month}-${String(p.day).padStart(2,'0')}`;
@@ -105,8 +105,8 @@ function renderTimes(st){
   if (renderTimes.key !== S.Y+'|'+S.lat+'|'+S.lon+'|'+S.tz){
     renderTimes.key = S.Y+'|'+S.lat+'|'+S.lon+'|'+S.tz;
     $('seasonTitle').textContent = `Solstices and equinoxes ${S.Y}`;
-    const df = new Intl.DateTimeFormat('en-US',{timeZone:tz,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-    const pf = new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'});
+    const df = dtf({timeZone:tz,month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    const pf = dtf({timeZone:tz,year:'numeric',month:'numeric',day:'numeric'});
     $('seasons').innerHTML = [['March equinox',0,'--accent'],['June solstice',90,'--day'],['September equinox',180,'--accent'],['December solstice',270,'--blue']].map(([n,deg,sw])=>{
       const ms = seasonInstant(S.Y,deg), q={}; pf.formatToParts(new Date(ms)).forEach(x=>q[x.type]=x.value);
       const [a,b] = dayBounds(+q.year,+q.month,+q.day,tz), r = crossings(a,b,lat,lon,-0.833);
@@ -116,24 +116,35 @@ function renderTimes(st){
   document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===S.mode));
 }
 
+// The colour bar and hour ticks only change with the day, place, golden-hour mode or size, so they are drawn once
+// into a spare canvas and copied; each update then only draws the time marker.
+const tlBar = {key: null, cv: document.createElement('canvas')};
 function drawTimeline(st){
   const cv = $('tl'), dpr = window.devicePixelRatio||1, w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
-  if (cv.width !== Math.round(w*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
-  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
   const big = bigInfo(), fs = big ? 27 : 11, tick = big ? 1.5 : 1;   // big text: labels 2.5x, ticks 1.5x
-  const {t0,t1,t,lat,lon,tz} = st, span = t1-t0, barH = h-(big ? 36 : 18), cache = {};
+  const {t0,t1,t,lat,lon,tz} = st, span = t1-t0, barH = h-(big ? 36 : 18);
+  const key = [t0, lat, lon, tz, S.mode, cv.width, cv.height, big].join('|');
+  if (tlBar.key !== key){ tlBar.key = key; drawTimelineBar(tlBar.cv, cv.width, cv.height, dpr, w, h, st, big, fs, tick, barH); }
+  const g = cv.getContext('2d'); g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,cv.width,cv.height); g.drawImage(tlBar.cv, 0, 0);
+  g.setTransform(dpr,0,0,dpr,0,0);
+  cv.setAttribute('aria-valuenow', S.minute); cv.setAttribute('aria-valuetext', fmtT(t, tz));
+  const mx = (t-t0)/span*w; g.fillStyle = cssv('--fg');
+  g.fillRect(mx-tick, 0, 2*tick, barH);
+  g.beginPath(); g.moveTo(mx-6*tick,0); g.lineTo(mx+6*tick,0); g.lineTo(mx,7*tick); g.closePath(); g.fill();
+}
+function drawTimelineBar(bc, W, H, dpr, w, h, st, big, fs, tick, barH){
+  bc.width = W; bc.height = H;
+  const g = bc.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const {t0,t1,lat,lon,tz} = st, span = t1-t0, cache = {};
   for (let x=0;x<w;x+=2){ const a = sunPos(t0+span*(x+1)/w,lat,lon).altGeo, k = phaseOf(a); g.fillStyle = cache[k] || (cache[k]=cssv(k)); g.fillRect(x,0,2.2,barH); }
   g.fillStyle = cssv('--muted'); g.font = `${fs}px ${cssv('--font')}`; g.textAlign='center';
-  const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',hour:'2-digit'});
+  const hf = dtf({timeZone:tz,hourCycle:'h23',hour:'2-digit'});
   for (let k=0, x0=t0; x0<=t1+1; k++, x0+=3600000){
     const x = (x0-t0)/span*w, hr = parseInt(hf.format(new Date(x0)),10)%24;
     g.fillRect(Math.min(Math.round(x),w-1), barH, tick, (k%3?3:6)*tick);
     if (k%6===0 && x0<t1) g.fillText(hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p', Math.min(Math.max(x,fs*1.1),w-fs*1.1), h-(big ? 3 : 1));
   }
-  cv.setAttribute('aria-valuenow', S.minute); cv.setAttribute('aria-valuetext', fmtT(t, tz));
-  const mx = (t-t0)/span*w; g.fillStyle = cssv('--fg'); g.fillRect(mx-1,0,2,barH);
-  g.fillRect(mx-tick, 0, 2*tick, barH);
-  g.beginPath(); g.moveTo(mx-6*tick,0); g.lineTo(mx+6*tick,0); g.lineTo(mx,7*tick); g.closePath(); g.fill();
 }
 
 // ---------- map (OpenStreetMap via Leaflet) ----------
@@ -143,9 +154,23 @@ function dest(lat, lon, az, m){ // point m meters away along bearing az
   const l2 = l1 + Math.atan2(Math.sin(b)*Math.sin(r)*Math.cos(p1), Math.cos(r) - Math.sin(p1)*Math.sin(p2));
   return [p2*D, l2*D];
 }
-function initMap(){
+// the map library (~150 KB) loads the first time the Map tab opens, not at every start; it is still saved for offline use
+const VQ = ((document.querySelector('script[src^="app.js"]') || {}).src || '').replace(/^[^?]*/, '');   // same ?v=N as this release
+let leafletLoading = null;
+function loadLeaflet(){
+  if (typeof L !== 'undefined') return Promise.resolve();
+  return leafletLoading || (leafletLoading = new Promise((ok, fail) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/leaflet.css' + VQ; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'vendor/leaflet.js' + VQ; js.onload = ok; js.onerror = () => { leafletLoading = null; fail(); };
+    document.head.appendChild(js);
+  }));
+}
+async function initMap(){
   if (map) return;
-  if (typeof L === 'undefined'){ $('map').innerHTML = '<p style="padding:24px;color:var(--muted)">The map needs an internet connection. Check your signal and reload.</p>'; return; }
+  try { await loadLeaflet(); } catch(e){}
+  if (map) return;
+  if (typeof L === 'undefined'){ $('map').innerHTML = '<p style="padding:24px;color:var(--muted)">The map needs an internet connection the first time. Check your signal and try again.</p>'; return; }
+  $('map').innerHTML = '';
   map = L.map('map', {zoomControl:false, attributionControl:true}).setView([S.lat,S.lon], 18);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap contributors'}).addTo(map);
   mapLayer = L.layerGroup().addTo(map);
@@ -163,7 +188,7 @@ function renderMap(st){
   if (ev.sun.rise) ray(sunPos(ev.sun.rise,lat,lon).az, c.rise, 4);
   if (ev.sun.set)  ray(sunPos(ev.sun.set,lat,lon).az, c.set, 4);
   // hour dots on a ring, like a sundial seen from above
-  const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
+  const hf = dtf({timeZone:tz,hour:'numeric',hourCycle:'h23'});
   for (let x=Math.ceil(t0/3600000)*3600000; x<t1; x+=3600000){
     const p = sunPos(x,lat,lon); if (p.alt <= 0) continue; const q = dest(lat,lon,p.az,len*0.8), hr = +hf.format(new Date(x))%24;
     L.circleMarker(q,{radius:4,color:c.path,fillColor:c.path,fillOpacity:1,weight:1,interactive:false}).addTo(mapLayer);
@@ -198,7 +223,7 @@ for (const id of ['lat','lon']) $(id).addEventListener('change', () => { const l
   if (la>=-90&&la<=90&&lo>=-180&&lo<=180) setLocation(la, lo, 'Custom spot'); else toast('Latitude −90 to 90, longitude −180 to 180'); });
 $('height').addEventListener('change', e => { const v=+e.target.value; if (v>0){ S.heightIn=v; store.set('heightIn',v); render(); } });
 // ---------- time zone setting ----------
-function tzAbbr(ms, tz){ const p = new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date(ms)).find(x=>x.type==='timeZoneName'); return p ? p.value : tz; }
+function tzAbbr(ms, tz){ const p = dtf({timeZone:tz,timeZoneName:'short'}).formatToParts(new Date(ms)).find(x=>x.type==='timeZoneName'); return p ? p.value : tz; }
 (function(){
   const sel = $('tz'); if (!sel) return;
   const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : ['America/New_York','America/Chicago','America/Denver','America/Phoenix','America/Los_Angeles','America/Anchorage','Pacific/Honolulu','UTC'];
@@ -217,7 +242,7 @@ $('date').addEventListener('change', e => { const [y,m,d] = e.target.value.split
 $('nowBtn').addEventListener('click', () => { setNow(); render(); });
 let drag = false;
 function scrub(e){ const r=$('tl').getBoundingClientRect(), f=Math.min(Math.max((e.clientX-r.left)/r.width,0),0.9999), st=state();
-  const x = st.t0 + (st.t1-st.t0)*f, p={}; new Intl.DateTimeFormat('en-US',{timeZone:S.tz,hourCycle:'h23',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(x)).forEach(q=>p[q.type]=q.value);
+  const x = st.t0 + (st.t1-st.t0)*f, p={}; dtf({timeZone:S.tz,hourCycle:'h23',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(x)).forEach(q=>p[q.type]=q.value);
   S.minute = (+p.hour)*60 + (+p.minute); S.live = false; render(); }
 $('tl').addEventListener('pointerdown', e => { drag=true; $('tl').setPointerCapture(e.pointerId); scrub(e); });
 $('tl').addEventListener('pointermove', e => { if (drag) scrub(e); });
@@ -238,7 +263,7 @@ function show(view){
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.view===view ? 'page' : 'false'));
   if (view === 'ar') ar.show(); else ar.hide();
   if (view !== 'dome' && typeof setDomeLive === 'function' && domeLive) setDomeLive(false);
-  if (view === 'map'){ initMap(); if (map) setTimeout(()=>{ map.invalidateSize(); map.setView([S.lat,S.lon]); renderMap(state()); }, 30); }
+  if (view === 'map') initMap().then(() => { if (map && S.view === 'map') setTimeout(()=>{ map.invalidateSize(); map.setView([S.lat,S.lon]); renderMap(state()); }, 30); });
   render();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
@@ -268,7 +293,7 @@ function domeFrame(){
   requestAnimationFrame(domeFrame);
 }
 function setDomeLive(on){
-  domeLive = on;
+  domeLive = on; motion.use('dome', on);
   $('domeLive').setAttribute('aria-pressed', on); $('domeLive').textContent = on ? 'Freeze' : 'Live';
   $('domeRead').hidden = !on; $('domeHint').hidden = on;
   if (on){ vYaw = null; vPitch = null; requestAnimationFrame(domeFrame); }

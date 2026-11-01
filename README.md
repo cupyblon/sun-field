@@ -51,6 +51,13 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Keyboard and screen-reader support: timeline slider, dome keys, focus kept in panels, live messages, reduced motion.
 - Regression tests (`tests/`) and a release script (`tools/release.py`).
 
+## v11 (Nov 1, 2026): code review, speed and cleanup
+- Date/time formatters reused: a full screen update is about 2x faster; time-zone math about 15x faster.
+- Motion sensors run only while Live, the Camera or Calibrate use them.
+- Map tiles: saved copy first, refreshed in the background. Map library loads on first use of the Map tab.
+- Timeline bar and the dome's celestial grid are drawn once and reused.
+- Dead code and CSS removed, comments brought up to date. Details: `docs/code-review-2026-11-01.md`.
+
 ## How accurate is it?
 
 Everything is calculated on the device. Each engine was checked against an independent source:

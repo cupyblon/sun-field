@@ -22,7 +22,7 @@ function createAR(opts){
   // ---- per-day / per-minute results, reused every frame ----
   const memo = new Map();
   const cached = (key, fn) => { if (!memo.has(key)){ if (memo.size > 30) memo.clear(); memo.set(key, fn()); } return memo.get(key); };
-  const hourText = (tz) => { const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hourCycle:'h23'});
+  const hourText = (tz) => { const hf = dtf({timeZone:tz,hour:'numeric',hourCycle:'h23'});
     return u => { const hr=+hf.format(new Date(u))%24; return hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p'; }; };
   function sky(st){
     const {lat, lon, t0, t1, t, Y, tz} = st, day = `${t0}|${lat}|${lon}|${tz}`;
@@ -32,15 +32,15 @@ function createAR(opts){
     const sunF = x => sunPos(x,lat,lon), moonF = x => moonPos(x,lat,lon);
     const daily = cached('d|'+day, () => ({
       sunPath: track(t0, t1, 5, sunF), sunHours: hours(sunF),
-      moonPath: typeof moonPos === 'function' ? track(t0, t1, 10, moonF) : [],
-      moonHours: typeof moonPos === 'function' && typeof skyEvents === 'function' ? hours(moonF) : []
+      moonPath: track(t0, t1, 10, moonF),
+      moonHours: hours(moonF)
     }));
     const seasons = cached(`s|${Y}|${lat}|${lon}|${tz}`, () => [[6,21,'Jun 21'],[12,21,'Dec 21']].map(([m,d,lbl]) => {
       const [a,b] = dayBounds(Y,m,d,tz), n = sunPos(solarNoon(a,b,lat,lon),lat,lon);
       return {lbl, path: track(a, b, 5, sunF), noon: [n.az, n.alt]}; }));
     const now = cached(`n|${t}|${lat}|${lon}`, () => {
-      const out = {sun: sunPos(t,lat,lon), moon: typeof moonPos === 'function' ? moonPos(t,lat,lon) : null, dipper: {}, stars: [], planets: []};
-      if (typeof planetPos === 'function'){
+      const out = {sun: sunPos(t,lat,lon), moon: moonPos(t,lat,lon), dipper: {}, stars: [], planets: []};
+      {
         for (const [n,ra,dec] of DIPPER) out.dipper[n] = starPos(ra,dec,t,lat,lon);
         for (const [n,ra,dec,mag] of STARS){ if (n === 'Polaris') continue; const s = starPos(ra,dec,t,lat,lon); if (s.alt >= -1) out.stars.push({n, mag, az:s.az, alt:s.alt}); }
         for (const n of PLANETS){ const q = planetPos(n,t,lat,lon); if (q.alt >= -1) out.planets.push({n, az:q.az, alt:q.alt}); }
@@ -71,7 +71,7 @@ function createAR(opts){
   async function start(){
     $('arErr').textContent = '';
     try {
-      await motion.start();
+      await motion.start(); motion.use('ar', true);
       await startCamera();
       $('arStart').hidden = true; started = true; run();
     } catch (err){ $('arErr').textContent = camError(err); }
@@ -129,7 +129,7 @@ function createAR(opts){
         label([mq[0], mq[1]+26], `Moon ${Math.round(m.lit*100)}%`, '#eef1f7', 12, true);
       }
     }
-    if (typeof planetPos === 'function'){             // bright stars, Big Dipper, planets
+    {                                                 // bright stars, Big Dipper, planets
       const pos = now.dipper, dq = {};
       for (const n in pos) dq[n] = proj(pos[n].az, pos[n].alt);
       for (const [a2,b2] of DIPPER_LINES) if (dq[a2] && dq[b2]) poly([dq[a2],dq[b2]], 'rgba(200,215,255,.55)', 1.2);
@@ -168,9 +168,9 @@ function createAR(opts){
     // Only what you can actually see: by day the Sun and the Moon; in twilight add Venus and Jupiter; at night everything bright
     const out = [], up = (n, p, min) => { if (p.alt > min) out.push({n, az:p.az, alt:p.alt}); }, sunAlt = sunPos(ms,lat,lon).alt;
     up('the Sun', sunPos(ms,lat,lon), 0);
-    if (typeof moonPos === 'function') up('the Moon', moonPos(ms,lat,lon), 0);
-    if (typeof planetPos === 'function' && sunAlt < 0 && sunAlt >= -6){ for (const n of ['Venus','Jupiter']) up(n, planetPos(n,ms,lat,lon), 3); }
-    else if (typeof planetPos === 'function' && sunAlt < -6){
+    up('the Moon', moonPos(ms,lat,lon), 0);
+    if (sunAlt < 0 && sunAlt >= -6){ for (const n of ['Venus','Jupiter']) up(n, planetPos(n,ms,lat,lon), 3); }
+    else if (sunAlt < -6){
       for (const n of ['Venus','Jupiter','Mars','Saturn']) up(n, planetPos(n,ms,lat,lon), 3);
       for (const [n,ra,dec,mag] of STARS) if (mag < 1.0) up(n, starPos(ra,dec,ms,lat,lon), 5);
     }
@@ -184,7 +184,7 @@ function createAR(opts){
     const sep = q => Math.acos(Math.min(1, Math.sin(aimAlt*R)*Math.sin(q.alt*R) + Math.cos(aimAlt*R)*Math.cos(q.alt*R)*Math.cos((aimAz-q.az)*R)))*D;
     const best = skyTargets(st.lat, st.lon, now).map(q => ({...q, d: sep(q)})).sort((a,b) => a.d - b.d)[0];
     if (!best || best.d > 20){ toast('Put the crosshair on the sun, the moon or a bright planet, then tap Align'); return; }
-    const tf = new Intl.DateTimeFormat('en-US',{timeZone:st.tz, month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+    const tf = dtf({timeZone:st.tz, month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
     motion.setCal({dAz: ((paz - best.az + 540) % 360) - 180, dAlt: palt - best.alt, on: best.n, at: tf.format(new Date(now))});
     toast(`Locked on ${best.n} (${motion.cal.dAz>=0?'+':''}${motion.cal.dAz.toFixed(1)}° compass correction) · Camera and Dome`);
   });
@@ -192,7 +192,7 @@ function createAR(opts){
   $('arGo').addEventListener('click', start);
 
   return {
-    show(){ visible = true; resume(); },
-    hide(){ visible = false; stopCamera(); }
+    show(){ visible = true; if (started) motion.use('ar', true); resume(); },
+    hide(){ visible = false; motion.use('ar', false); stopCamera(); }
   };
 }

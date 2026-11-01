@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '16';
+  const APP_VERSION = '18';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;
@@ -93,10 +93,13 @@
   }
   for (const id of ['domeCal','arCal','setCal']) $(id).addEventListener('click', openCal);
   $('calClose').addEventListener('click', () => closeSheet('calSheet'));
+  // leaving Calibrate stops its compass check (the sensors pause unless Live or the Camera still use them)
+  new MutationObserver(() => { if ($('calSheet').hidden && compassOn){ compassOn = false; motion.use('cal', false); } })
+    .observe($('calSheet'), {attributes: true, attributeFilter: ['hidden']});
 
   // start the compass check: must be called straight from a tap (iPhone asks permission only then)
   async function startCompass(){
-    try { await motion.start(); } catch(err){ compassOn = false; row('ckCompass', 'warn', err.message || sensorHelp()); $('calCompassTxt').textContent = err.message || sensorHelp(); return false; }
+    try { await motion.start(); motion.use('cal', true); } catch(err){ compassOn = false; row('ckCompass', 'warn', err.message || sensorHelp()); $('calCompassTxt').textContent = err.message || sensorHelp(); return false; }
     motion.reset(); compassOn = true; still0 = null; steady = false; $('calCompass').textContent = 'Start over';
     return true;
   }

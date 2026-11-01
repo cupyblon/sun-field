@@ -1,5 +1,9 @@
 /* Sun engine: NOAA solar position, Meeus seasons. Shared by every view. */
 const R = Math.PI/180, D = 180/Math.PI;
+// Date/time formatters are slow to build (~80 µs each) and the app formats times constantly,
+// so each distinct format is built once and reused. dtf({timeZone, hour, ...}) == new Intl.DateTimeFormat('en-US', ...)
+const DTF = new Map();
+function dtf(opts){ const k = JSON.stringify(opts); let f = DTF.get(k); if (!f){ f = new Intl.DateTimeFormat('en-US', opts); DTF.set(k, f); } return f; }
 const DELTA_T = 69;  // seconds, TT minus UT (good for the late 2020s); shared by the sun, moon and planet engines
 function sunCore(ms){
   const jd = ms/86400000 + 2440587.5, T = (jd-2451545)/36525;
@@ -36,7 +40,7 @@ function refraction(e){
   return r/3600;
 }
 function tzOffset(ms, tz){
-  const p = {}; new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})
+  const p = {}; dtf({timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})
     .formatToParts(new Date(ms)).forEach(x=>p[x.type]=x.value);
   return Date.UTC(+p.year, +p.month-1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms/1000)*1000;
 }
@@ -99,6 +103,6 @@ function dayEvents(Y,M,Dd,lat,lon,tz,mode){
     noon: solarNoon(t0,t1,lat,lon)};
 }
 const roundMin = ms => Math.floor(ms/60000)*60000; // drop the seconds, same as Sun Surveyor
-const fmtT = (ms,tz) => ms==null ? '—' : new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',minute:'2-digit'}).format(new Date(roundMin(ms)));
+const fmtT = (ms,tz) => ms==null ? '—' : dtf({timeZone:tz,hour:'numeric',minute:'2-digit'}).format(new Date(roundMin(ms)));
 const fmtSpanDur = (a,b) => { const m=Math.round((roundMin(b)-roundMin(a))/60000); return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; };
 const fmtDurS = ms => { if (ms==null||ms<0) return '—'; const s=Math.round(ms/1000); return `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`; };

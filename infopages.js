@@ -1,8 +1,9 @@
-/* Swipeable info strip: Sun, Twilight, Shadow, Moon, Moon phases, Milky Way. Load after app.js and moon.js.
-   Turns the bottom strip into pages you swipe (or tap the arrows / dots); remembers the last page. */
+/* Swipeable info strip: Sun, Twilight, Shadow, Moon, Moon phases, Milky Way, Sky today. Load after app.js.
+   Turns the bottom strip into pages you swipe (or tap the arrows / dots); remembers the last page.
+   Also adds the sky-event banner and the "Coming up in the sky" list to the Times tab. */
 (function(){
   const strip = document.querySelector('.strip');
-  if (!strip || typeof moonPos !== 'function') return;
+  if (!strip) return;
   const sunCols = strip.innerHTML;                       // keep the original Sun page and its ids (app.js still fills them)
   strip.classList.add('pages');
   strip.innerHTML = `
@@ -31,7 +32,7 @@
         <div style="--c:#b9a7ff"><b>Milky Way core</b><span class="data" id="mwNow">—</span></div>
         <div style="--c:#7d6be0"><b>Dark-sky window</b><span class="data" id="mwWin">—</span></div>
       </div>
-      ${typeof skyEvents === 'function' ? '<div class="page skytoday" data-name="Sky today" id="skyToday"><span class="muted">Checking the sky…</span></div>' : ''}
+      <div class="page skytoday" data-name="Sky today" id="skyToday"><span class="muted">Checking the sky…</span></div>
     </div>
     <button type="button" class="pg-arrow prev" id="pgPrev" aria-label="Previous page">‹</button>
     <button type="button" class="pg-arrow next" id="pgNext" aria-label="Next page">›</button>
@@ -62,7 +63,7 @@
 
   // ---- Times tab: today's highlight banner and a 30-day "coming up" list ----
   const pad = document.querySelector('#view-times .pad');
-  if (pad && typeof skyEvents === 'function'){
+  if (pad){
     const banner = document.createElement('div'); banner.className = 'sky-banner'; banner.id = 'skyBanner'; banner.hidden = true;
     const card = document.createElement('div'); card.className = 'card'; card.innerHTML = '<h2>Coming up in the sky</h2><table><tbody id="skyList"><tr><td class="muted">Working it out…</td></tr></tbody></table><p class="muted small">Meteor peaks from the IMO calendar; eclipses calculated for your spot and checked against NASA. Times are local.</p>';
     pad.insertBefore(banner, pad.firstChild);
@@ -75,7 +76,7 @@
   const memo = (key, fn) => { const [kind, ...rest] = key.split('|'), k = rest.join('|');
     if (!cache[kind] || cache[kind].k !== k) cache[kind] = {k, v: fn()}; return cache[kind].v; };
   const fmtLenIn = v => v >= 12 ? `${(v/12).toFixed(2)} ft (${Math.floor(v/12)}′ ${(v%12).toFixed(1)}″)` : `${v.toFixed(1)} in`;
-  const dateFmt = tz => new Intl.DateTimeFormat('en-US',{timeZone:tz,month:'numeric',day:'numeric',year:'2-digit'});
+  const dateFmt = tz => dtf({timeZone:tz,month:'numeric',day:'numeric',year:'2-digit'});
 
   function fill(){
     const st = state(), {t, t0, t1, lat, lon, tz, ev} = st, T = id => document.getElementById(id);
@@ -106,13 +107,12 @@
   // sky events: heavier, so computed once per day/place and a moment after the page settles
   let skyKey = '', skyTimer = null;
   function fillSky(){
-    if (typeof skyEvents !== 'function') return;
     const st = state(), {t0, t1, lat, lon, tz} = st, key = [t0, lat, lon, tz].join(',');
     if (key === skyKey) return; skyKey = key;
     clearTimeout(skyTimer);
     skyTimer = setTimeout(() => {
       const T = id => document.getElementById(id);
-      const df = new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',month:'short',day:'numeric'});
+      const df = dtf({timeZone:tz,weekday:'short',month:'short',day:'numeric'});
       const tonight = skyEvents(t0, t1 + 12*3600000, lat, lon, tz);
       const vis = planetsVisible(t0, t1, lat, lon);
       const pl = [vis.evening.length ? `Evening: ${vis.evening.join(', ')}` : '', vis.morning.length ? `Before dawn: ${vis.morning.join(', ')}` : ''].filter(Boolean).join(' · ');
