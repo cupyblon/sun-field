@@ -65,7 +65,7 @@
     const banner = document.createElement('div'); banner.className = 'sky-banner'; banner.id = 'skyBanner'; banner.hidden = true;
     const card = document.createElement('div'); card.className = 'card'; card.innerHTML = '<h2>Coming up in the sky</h2><table><tbody id="skyList"><tr><td class="muted">Working it out…</td></tr></tbody></table><p class="muted small">Meteor peaks from the IMO calendar; eclipses calculated for your spot and checked against NASA. Times are local.</p>';
     pad.insertBefore(banner, pad.firstChild);
-    const seg = pad.querySelector('.seg'); pad.insertBefore(card, seg ? seg.nextSibling : null);
+    const settings = pad.querySelector('.card.settings'); pad.insertBefore(card, settings);   // after the sun lists, above Settings
   }
 
   // ---- filling the pages ----
