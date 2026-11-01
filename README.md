@@ -37,3 +37,27 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Sensor help names the right steps for Brave (desktop and Android), iPhone Safari, Chrome and Samsung Internet.
 - On a computer with no touch screen, Live and Camera show "needs a phone" instead of waiting for a compass.
 - Every release: bump `VERSION` in `sw.js` and all `?v=N` tags in `index.html`, or phones keep the old offline copy.
+
+## How accurate is it?
+
+Everything is calculated on the device. Each engine was checked against an independent source:
+
+| What | Checked against | Result |
+|---|---|---|
+| Sunrise, sunset, twilight, golden and blue hour | Sun Surveyor and PyEphem | Within seconds (times shown truncated to the minute, like Sun Surveyor) |
+| Equinoxes and solstices | Meeus, *Astronomical Algorithms* ch. 27 | About a minute |
+| Moonrise and moonset | PyEphem | Within 28 seconds |
+| Moon phases | PyEphem | Within 1 minute |
+| Planet positions | PyEphem | 1–5 arcminutes (a full Moon is 30 arcminutes wide) |
+| Bright stars | PyEphem | Within 0.03° |
+| Meteor shower peaks | IMO meteor shower calendar | Within about 25 minutes |
+| Lunar eclipses | NASA eclipse tables | Times match; umbral magnitude within 0.008 |
+| Solar eclipses from Chicago | NASA | 2017: 87.6% covered · 2024: 93.8% · Jan 26, 2028: 1.3% |
+
+**Limits to know about**
+- **Real-world rise and set** can differ by a minute or two from any calculator: hills, trees and unusual air (very cold or hot) bend the light differently. The math assumes a flat, open horizon.
+- **Work light** (civil dawn to civil dusk) is light on open ground. Woods, clouds and buildings make it darker sooner.
+- **Compass** in phones is often 5–10° off and is thrown off by metal, cars, rebar and magnetic phone cases. *Align to sun* in the Camera tab corrects it.
+- **Meteor rates** are best-case estimates for a dark sky; city light cuts them a lot.
+- **Planet math** uses JPL elements valid 1800–2050; the clock correction (ΔT) is set for the late 2020s.
+- **Time zone** follows your phone unless you pick another one in Settings.
