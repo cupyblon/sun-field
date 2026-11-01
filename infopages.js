@@ -43,7 +43,8 @@
   const cur = () => Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth));
   function mark(){ const i = cur(); dots.querySelectorAll('button').forEach((b,k)=>b.setAttribute('aria-selected', k===i));
     document.getElementById('pgPrev').disabled = i === 0; document.getElementById('pgNext').disabled = i === pages.length-1; store.set('infoPage', i); }
-  const go = i => pager.scrollTo({left: i*pager.clientWidth, behavior: 'smooth'});
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const go = i => pager.scrollTo({left: i*pager.clientWidth, behavior: calm.matches ? 'auto' : 'smooth'});
   pager.addEventListener('scroll', () => { clearTimeout(pager._t); pager._t = setTimeout(mark, 60); });
   dots.addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(+b.dataset.i); });
   document.getElementById('pgPrev').addEventListener('click', () => go(Math.max(0, cur()-1)));

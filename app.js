@@ -130,6 +130,7 @@ function drawTimeline(st){
     g.fillRect(Math.min(Math.round(x),w-1), barH, tick, (k%3?3:6)*tick);
     if (k%6===0 && x0<t1) g.fillText(hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p', Math.min(Math.max(x,fs*1.1),w-fs*1.1), h-(big ? 3 : 1));
   }
+  cv.setAttribute('aria-valuenow', S.minute); cv.setAttribute('aria-valuetext', fmtT(t, tz));
   const mx = (t-t0)/span*w; g.fillStyle = cssv('--fg'); g.fillRect(mx-1,0,2,barH);
   g.fillRect(mx-tick, 0, 2*tick, barH);
   g.beginPath(); g.moveTo(mx-6*tick,0); g.lineTo(mx+6*tick,0); g.lineTo(mx,7*tick); g.closePath(); g.fill();
@@ -221,6 +222,13 @@ function scrub(e){ const r=$('tl').getBoundingClientRect(), f=Math.min(Math.max(
 $('tl').addEventListener('pointerdown', e => { drag=true; $('tl').setPointerCapture(e.pointerId); scrub(e); });
 $('tl').addEventListener('pointermove', e => { if (drag) scrub(e); });
 $('tl').addEventListener('pointerup', () => drag=false);
+$('tl').addEventListener('keydown', e => {           // keyboard: arrows move 5 min (Shift: 1 hour), Home/End jump to the ends of the day
+  const step = e.shiftKey ? 60 : 5, k = e.key;
+  let m = S.minute;
+  if (k === 'ArrowRight' || k === 'ArrowUp') m += step; else if (k === 'ArrowLeft' || k === 'ArrowDown') m -= step;
+  else if (k === 'Home') m = 0; else if (k === 'End') m = 1439; else return;
+  e.preventDefault(); S.minute = Math.max(0, Math.min(1439, m)); S.live = false; render();
+});
 $('tl').addEventListener('pointercancel', () => drag=false);
 
 // ---------- tabs ----------
@@ -315,5 +323,5 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   const hadOne = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').catch(() => {});
   let told = false;         // first install: offline is ready; later: a new version is saved for next time
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!told){ told = true; toast(hadOne ? 'Sun Field updated' : 'Saved to your phone · works offline'); } });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!told && !hadOne){ told = true; toast('Saved to your phone · works offline'); } });
 }

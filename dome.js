@@ -206,6 +206,14 @@ function createDome(canvas, colors, initialLayers){
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.max(0.6, Math.min(2.2, zoom*(e.deltaY<0?1.08:0.93))); draw(); }, {passive:false});
   new ResizeObserver(()=>draw()).observe(canvas);
+  canvas.addEventListener('keydown', e => {           // keyboard: arrows turn and tilt, + and - zoom
+    const k = e.key;
+    if (k === 'ArrowLeft') yaw = (yaw - 10 + 360) % 360; else if (k === 'ArrowRight') yaw = (yaw + 10) % 360;
+    else if (k === 'ArrowUp') pitch = Math.min(89, pitch + 5); else if (k === 'ArrowDown') pitch = Math.max(-30, pitch - 5);
+    else if (k === '+' || k === '=') zoom = Math.min(2.2, zoom*1.1); else if (k === '-') zoom = Math.max(0.6, zoom/1.1);
+    else return;
+    e.preventDefault(); draw();
+  });
 
   return {
     draw, layers,

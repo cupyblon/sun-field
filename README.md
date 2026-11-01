@@ -45,6 +45,12 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - About sheet (ⓘ): How to use, Tips, Accuracy, About.
 - Clearer privacy line, work-light caveat, camera aim tip.
 
+## v10 (Nov 1, 2026): Quick calibrate, tests, accessibility
+- Quick calibrate: one tap for GPS, NOAA north correction and the compass check, with a checklist; Sky lock as the last step.
+- "Updated to version N" notice once per release.
+- Keyboard and screen-reader support: timeline slider, dome keys, focus kept in panels, live messages, reduced motion.
+- Regression tests (`tests/`) and a release script (`tools/release.py`).
+
 ## How accurate is it?
 
 Everything is calculated on the device. Each engine was checked against an independent source:
