@@ -208,3 +208,35 @@ td .sub{color:var(--muted);font-size:12px}
   .big-info .time-row .chip{font-size:32px;padding:8px 20px;border-radius:14px}
   .big-info #tl{height:90px}
 }
+.work-caveat{margin-top:2px;opacity:.85}
+.settings a,.foot a{color:var(--accent)}
+
+/* v9: Calibrate and About sheets */
+.top-btns{display:flex;gap:8px}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px}
+.sheet{position:fixed;inset:0;z-index:3000;background:rgba(3,5,10,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet-card{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 0 0;width:min(640px,100%);max-height:88vh;overflow-y:auto;
+  padding:14px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -8px 30px rgba(0,0,0,.5)}
+@media (min-width:700px){ .sheet{align-items:center} .sheet-card{border-radius:16px} }
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet-head h2{margin:0;font-size:18px}
+.cal-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cal-steps li{display:grid;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.cal-steps li[hidden]{display:none}
+.cal-steps .chip{justify-self:start}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.meter i.done{background:#3ccf6e}
+.about-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.about-tabs button{border:0;background:none;color:var(--muted);font-weight:600;font-size:13px;padding:7px 2px;border-radius:7px;cursor:pointer}
+.about-tabs button[aria-selected="true"]{background:var(--surface2);color:var(--fg)}
+.about-body{font-size:14px;line-height:1.45}
+.about-body a{color:var(--accent)}
+.howto,.tips{margin:0;padding-left:20px;display:grid;gap:10px}
+.howto b,.tips b{display:block}
+.tips b{display:inline}
+table.acc{width:100%;border-collapse:collapse;font-size:13px}
+table.acc td{padding:6px 4px;border-top:1px solid var(--line);vertical-align:top}
+table.acc td:last-child{color:var(--muted)}
+body.sheet-open{overflow:hidden}

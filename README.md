@@ -38,6 +38,13 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - On a computer with no touch screen, Live and Camera show "needs a phone" instead of waiting for a compass.
 - Every release: bump `VERSION` in `sw.js` and all `?v=N` tags in `index.html`, or phones keep the old offline copy.
 
+## v9 (Nov 1, 2026): calibration and About
+- Calibrate (Dome, Camera, Settings): GPS fix, compass offset from NOAA's World Magnetic Model 2025, compass reset with a figure-8 meter, sky lock status.
+- Align locks the Camera onto the Sun or Moon (planets and bright stars at night); the same correction now steers the live Dome.
+- Declination fills in automatically for each spot unless typed by hand.
+- About sheet (ⓘ): How to use, Tips, Accuracy, About.
+- Clearer privacy line, work-light caveat, camera aim tip.
+
 ## How accurate is it?
 
 Everything is calculated on the device. Each engine was checked against an independent source:

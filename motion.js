@@ -20,10 +20,14 @@ function sensorHelp(){
 const NO_SENSORS = navigator.maxTouchPoints === 0 && window.matchMedia('(pointer:fine)').matches && !/Android|iPhone|iPad/.test(navigator.userAgent);
 
 function createMotion(opts){
-  const getDecl = opts.getDecl || (() => 0);
-  let ori = null, smooth = null, iosOffset = null, started = false;
-  // diagnostics: how many readings arrived, last compass value, whether we're running without true north
-  const stat = {events: 0, lastH: undefined, relative: false};
+  const getDecl = opts.getDecl || (() => 0), store = opts.store;
+  let ori = null, smooth = null, iosOffset = null, started = false, last = null;
+  // diagnostics: how many readings arrived, last compass value, whether we're running without true north,
+  // the phone's own compass accuracy (iPhone only, degrees), and how much the phone has been turned (for the figure-8 meter)
+  const stat = {events: 0, lastH: undefined, relative: false, accuracy: null, moved: 0};
+  const recent = [];                                   // last ~1.5 s of readings, to tell when the phone is held still
+  // Sky correction: set by Align (crosshair on the sun, moon or a planet). Shared by the Camera and the live Dome.
+  let cal = Object.assign({dAz:0, dAlt:0}, store ? store.get('arCal', {}) : {});
   const wrap = x => ((x % 360) + 540) % 360 - 180;
   const col = (m,i) => [m[0][i], m[1][i], m[2][i]];
   const azOf = v => ((Math.atan2(v[0], v[1])*D) + 360) % 360;
@@ -37,8 +41,11 @@ function createMotion(opts){
   function onOrient(e, absolute){
     if (e.alpha == null || e.beta == null || e.gamma == null) return;   // blocked sensors send empty events
     stat.events++;
-    const decl = getDecl(), H = e.webkitCompassHeading;
-    stat.lastH = H;
+    const decl = getDecl(), H = e.webkitCompassHeading, acc = e.webkitCompassAccuracy;
+    stat.lastH = H; stat.accuracy = (typeof acc === 'number' && acc >= 0) ? acc : null;
+    if (last) stat.moved += Math.min(30, Math.abs(wrap(e.alpha - last[0])) + Math.abs(e.beta - last[1]) + Math.abs(e.gamma - last[2]));
+    last = [e.alpha, e.beta, e.gamma];
+    const now = performance.now(); recent.push([now, e.alpha, e.beta, e.gamma]); while (recent.length && now - recent[0][0] > 1500) recent.shift();
     if (typeof H === 'number' && H >= 0){
       const upright = e.beta > 50 && e.beta < 130 && Math.abs(e.gamma) < 40;
       if (upright){
@@ -84,5 +91,15 @@ function createMotion(opts){
     const camAlt = Math.asin(Math.max(-1, Math.min(1, a.c[2])))*D;
     return {heading: (Math.hypot(fx,fy) < 1e-3) ? null : azOf([fx,fy,0]), camAlt};
   }
-  return { start, axes, facing, stat, get started(){ return started; } };
+  // how much the phone wobbled over the last 1.5 s (degrees); small = held still
+  function spread(){
+    if (recent.length < 5) return null;
+    let s = 0; for (const k of [1,2,3]){ const ref = recent[0][k]; let lo = 0, hi = 0;
+      for (const r of recent){ const d = wrap(r[k] - ref); lo = Math.min(lo, d); hi = Math.max(hi, d); } s = Math.max(s, hi - lo); }
+    return s;
+  }
+  // forget Sun Field's own idea of north and start fresh (the phone's compass hardware is calibrated by the phone itself)
+  function reset(){ iosOffset = null; smooth = null; stat.moved = 0; recent.length = 0; last = null; }
+  function setCal(v){ cal = Object.assign({dAz:0, dAlt:0}, v); if (store) store.set('arCal', cal); }
+  return { start, axes, facing, stat, spread, reset, setCal, get cal(){ return cal; }, get started(){ return started; } };
 }

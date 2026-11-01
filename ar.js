@@ -10,7 +10,6 @@ function createAR(opts){
   const $ = id => document.getElementById(id);
   const video = $('arVideo'), canvas = $('arCanvas'), ctx = canvas.getContext('2d');
   let started = false, visible = false, looping = false, stream = null, camPending = null;
-  let cal = store.get('arCal', {dAz:0, dAlt:0});
   let fov = store.get('arFov', 67);                 // field of view along the camera image's long side, degrees
   $('arFov').value = fov;
 
@@ -90,7 +89,7 @@ function createAR(opts){
     const dpr = window.devicePixelRatio||1, W = canvas.clientWidth, H = canvas.clientHeight;
     if (canvas.width !== Math.round(W*dpr) || canvas.height !== Math.round(H*dpr)){ canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr); }
     ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
-    const C = colors(), ax = motion.axes();
+    const C = colors(), ax = motion.axes(), cal = motion.cal;
     if (!ax){ $('arRead').textContent = 'Waiting for compass… move the phone in a figure 8'; return; }
     const {r,u,c} = ax;
     // focal length in screen pixels: camera image is scaled to cover the screen
@@ -163,17 +162,32 @@ function createAR(opts){
       + (motion.stat.relative ? ' · compass not ready, directions may be off' : '');
   }
 
-  // Align: put the crosshair on the real sun (squint, or use a shadow-safe view), tap, and the overlay locks to it.
+  // Align: put the crosshair on the real sun, moon, a bright planet or a bright star, and tap. Whatever bright object is
+  // nearest the crosshair becomes the reference, and the correction is shared with the live Dome.
+  function skyTargets(lat, lon, ms){
+    // Only what you can actually see: by day the Sun and the Moon; in twilight add Venus and Jupiter; at night everything bright
+    const out = [], up = (n, p, min) => { if (p.alt > min) out.push({n, az:p.az, alt:p.alt}); }, sunAlt = sunPos(ms,lat,lon).alt;
+    up('the Sun', sunPos(ms,lat,lon), 0);
+    if (typeof moonPos === 'function') up('the Moon', moonPos(ms,lat,lon), 0);
+    if (typeof planetPos === 'function' && sunAlt < 0 && sunAlt >= -6){ for (const n of ['Venus','Jupiter']) up(n, planetPos(n,ms,lat,lon), 3); }
+    else if (typeof planetPos === 'function' && sunAlt < -6){
+      for (const n of ['Venus','Jupiter','Mars','Saturn']) up(n, planetPos(n,ms,lat,lon), 3);
+      for (const [n,ra,dec,mag] of STARS) if (mag < 1.0) up(n, starPos(ra,dec,ms,lat,lon), 5);
+    }
+    return out;
+  }
   $('arAlign').addEventListener('click', () => {
     const ax = motion.axes();
     if (!started || !ax) { toast('Start the camera first'); return; }
-    const st = getState(), sp = sunPos(Date.now(), st.lat, st.lon);
-    if (sp.alt < 0){ toast('The sun is below the horizon right now'); return; }
-    const [paz, palt] = azAltOf(ax.c);
-    cal = {dAz: ((paz - sp.az + 540) % 360) - 180, dAlt: palt - sp.alt};
-    store.set('arCal', cal); toast(`Aligned (${cal.dAz>=0?'+':''}${cal.dAz.toFixed(1)}° compass correction)`);
+    const st = getState(), now = Date.now(), [paz, palt] = azAltOf(ax.c), cal = motion.cal;
+    const aimAz = paz - cal.dAz, aimAlt = palt - cal.dAlt;          // where the crosshair points with today's correction
+    const sep = q => Math.acos(Math.min(1, Math.sin(aimAlt*R)*Math.sin(q.alt*R) + Math.cos(aimAlt*R)*Math.cos(q.alt*R)*Math.cos((aimAz-q.az)*R)))*D;
+    const best = skyTargets(st.lat, st.lon, now).map(q => ({...q, d: sep(q)})).sort((a,b) => a.d - b.d)[0];
+    if (!best || best.d > 20){ toast('Put the crosshair on the sun, the moon or a bright planet, then tap Align'); return; }
+    const tf = new Intl.DateTimeFormat('en-US',{timeZone:st.tz, month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+    motion.setCal({dAz: ((paz - best.az + 540) % 360) - 180, dAlt: palt - best.alt, on: best.n, at: tf.format(new Date(now))});
+    toast(`Locked on ${best.n} (${motion.cal.dAz>=0?'+':''}${motion.cal.dAz.toFixed(1)}° compass correction) · Camera and Dome`);
   });
-  $('arReset').addEventListener('click', () => { cal = {dAz:0, dAlt:0}; store.set('arCal', cal); toast('Alignment cleared'); });
   $('arFov').addEventListener('input', e => { fov = +e.target.value; store.set('arFov', fov); });
   $('arGo').addEventListener('click', start);
 
