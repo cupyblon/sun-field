@@ -92,6 +92,9 @@ Two checks, run from the repo folder:
   NASA lunar and solar eclipses, NOAA magnetic declination, daylight-saving and leap days, and that every release version number matches.
   The reference answers come from PyEphem and pygeomag (`tests/make_reference.py` rebuilds them).
 - `node tests/offline-check.js` runs the offline and update sequence in a headless browser: open online, reopen offline,
-  publish a new version, reopen online (must show it), reopen offline (must still work). Needs Playwright.
+  publish a new version, reopen online (must show it), reopen offline (must still work), open the Map offline. Needs Playwright.
+- `node tests/motion-check.js` simulates iPhone compass readings: learn north, pause, change the compass offset, resume tilted;
+  the heading must use the new offset at once. Needs Playwright.
+- Not covered by automated tests: saved map tiles under heavy use, and real phone sensors (check those on the phones).
 
 To release: `python3 tools/release.py` bumps every version number and runs the math checks.

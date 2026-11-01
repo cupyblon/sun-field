@@ -66,3 +66,19 @@ The real costs were in a few hot paths.
 2. `dtf()` caches formatters by `JSON.stringify(options)`. The cache is unbounded, but in practice a few dozen distinct formats exist (more only if the user switches time zones many times). Is that acceptable, or should it be capped?
 3. `motion.use()` detaches the listener and clears the smoothed orientation on pause, but keeps the iPhone north correction. Any concern with that on Android or iOS?
 4. Is item C11 (folding `infopages.js` and `sheets.js` into `app.js`) worth doing, or is the current split clearer for a small app?
+
+## Second review (ChatGPT) and follow-up fixes, v19
+
+An independent source-code review of v18 agreed with the speed and cleanup changes and found the following. All five items were fixed in v19.
+
+| # | Finding | Fix | How it was checked |
+|---|---|---|---|
+| 1 | **Tile saving on a slow first visit.** On a cache miss, the background save only asked the browser to keep the worker alive *after* the network answered. If that took longer than the 8 s display timeout, the save (and its `waitUntil` call) could happen after the fetch event had ended. | `sw.js`: the fetch-and-save promise is passed to `e.waitUntil()` straight away, on hits and misses alike. The 8 s limit still applies to what is shown. | Code review; syntax check; offline helper installs and the app works offline. Real tile traffic can't be simulated here (the tile server is unreachable from the test machine). |
+| 2 | **Trim was not a trailing pass.** Tiles saved during a running trim reused it, so the store could stay above 400 until the next burst. | `sw.js`: an `again` flag makes the trim loop run once more after a burst. | Code review |
+| 3 | **Offline test never opened the Map.** | `tests/offline-check.js` step 6: opens the Map with no network; the map library must start from the saved copy and the sun lines must draw. | Passes |
+| 4 | **iPhone north correction kept an old compass offset after a pause.** The correction included the declination at the time it was learned, so if the location or offset changed while paused and Live resumed with the phone tilted, the heading was off by the difference until the phone was held upright again. | `motion.js`: the correction is stored relative to *magnetic* north, and the current declination is applied on every reading. | New `tests/motion-check.js`: learn north upright at −4.0°, pause, change the offset to +14.9°, resume tilted. v18: 196.0° (18.9° off). v19: 214.9° (correct). |
+| 5 | **Privacy wording** said nothing but map images leaves the phone. | Times footer: GitHub (hosting) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees the map area. About: "All the math runs on your device." | Visual check |
+
+Agreed with the reviewer and left unchanged: the unbounded formatter cache, the dome cache, oldest-first tile eviction, and the current file structure (C11 dropped).
+
+**What the automated tests do not cover:** saved map tiles under heavy use, and real phone sensors. Those need real-device checks: the Calibrate → Align flow, and Live after changing location while paused.
