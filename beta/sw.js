@@ -3,10 +3,10 @@
    - App files (versioned with ?v=N): served from the saved copy; a new version number means new files.
    - Map tiles: saved as you view them (up to 400), so the area you use most works offline too.
    Bump VERSION (and the ?v=N tags in index.html) on every release. */
-const VERSION = 'v11';
+const VERSION = 'v12';
 const SCOPE = self.registration.scope;                 // each install location keeps its own copy (e.g. a test page)
 const APP_CACHE = `sf-app-${VERSION}-${SCOPE}`, TILE_CACHE = 'sf-tiles', MAX_TILES = 400;
-const V = '?v=11';
+const V = '?v=12';
 const FILES = ['./', 'index.html', 'style.css'+V, 'vendor/leaflet.css'+V, 'vendor/leaflet.js'+V,
   'sun.js'+V, 'moon.js'+V, 'planets.js'+V, 'events.js'+V, 'dome.js'+V, 'motion.js'+V, 'ar.js'+V, 'app.js'+V, 'infopages.js'+V,
   '../manifest.webmanifest', '../icon-180.png', '../icon-512.png'];
