@@ -3,6 +3,22 @@
    Axes are unit vectors in the Earth frame (x=East, y=North, z=Up): r = screen right, u = screen top, c = camera (out the back).
    iPhone: steer with the gyro (smooth at every angle) and use the compass only to set true north while the
    phone is upright, so the heading does not flip when the phone tips toward flat. */
+// What to tell someone whose browser won't give motion readings, in their browser's own terms.
+function sensorHelp(){
+  const ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/.test(ua), samsung = /SamsungBrowser/.test(ua);
+  if (navigator.brave) return android
+    ? 'Brave is blocking the motion sensors. Tap ⋮ › Settings › Site settings › Motion sensors › Allow (or tap the lion icon and turn Shields down for this site), then reload. Chrome works too.'
+    : 'Brave is blocking the motion sensors. Tap the lion icon and turn Shields down for this site, then reload, or open the page in Safari.';
+  if (ios) return 'Motion access was declined. On iPhone: Settings › Safari › Motion & Orientation Access, then reload.';
+  if (android) return samsung
+    ? 'Motion sensors are blocked. In Samsung Internet: ☰ › Settings › Sites and downloads › Site permissions › Motion sensors › Allow, then reload. Chrome works too.'
+    : 'Motion sensors are blocked. Tap ⋮ › Settings › Site settings › Motion sensors › Allow, then reload.';
+  return 'This device is not giving motion readings. Live view and the Camera overlay need a phone or tablet with a compass.';
+}
+// A computer with a mouse and no touch screen has no compass or tilt sensors.
+const NO_SENSORS = navigator.maxTouchPoints === 0 && window.matchMedia('(pointer:fine)').matches && !/Android|iPhone|iPad/.test(navigator.userAgent);
+
 function createMotion(opts){
   const getDecl = opts.getDecl || (() => 0);
   let ori = null, smooth = null, iosOffset = null, started = false;
@@ -46,7 +62,7 @@ function createMotion(opts){
     if (started) return;
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
       const res = await DeviceOrientationEvent.requestPermission();
-      if (res !== 'granted') throw new Error('Motion access was declined. On iPhone: Settings › Safari › Motion & Orientation Access, then reload.');
+      if (res !== 'granted') throw new Error(sensorHelp());
     }
     if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', e=>onOrient(e,true));
     else window.addEventListener('deviceorientation', e=>onOrient(e,false));

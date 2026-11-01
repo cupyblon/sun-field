@@ -120,17 +120,19 @@ function drawTimeline(st){
   const cv = $('tl'), dpr = window.devicePixelRatio||1, w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
   if (cv.width !== Math.round(w*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
   const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
-  const {t0,t1,t,lat,lon,tz} = st, span = t1-t0, barH = h-18, cache = {};
+  const big = bigInfo(), fs = big ? 27 : 11, tick = big ? 1.5 : 1;   // big text: labels 2.5x, ticks 1.5x
+  const {t0,t1,t,lat,lon,tz} = st, span = t1-t0, barH = h-(big ? 36 : 18), cache = {};
   for (let x=0;x<w;x+=2){ const a = sunPos(t0+span*(x+1)/w,lat,lon).altGeo, k = phaseOf(a); g.fillStyle = cache[k] || (cache[k]=cssv(k)); g.fillRect(x,0,2.2,barH); }
-  g.fillStyle = cssv('--muted'); g.font = `11px ${cssv('--font')}`; g.textAlign='center';
+  g.fillStyle = cssv('--muted'); g.font = `${fs}px ${cssv('--font')}`; g.textAlign='center';
   const hf = new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',hour:'2-digit'});
   for (let k=0, x0=t0; x0<=t1+1; k++, x0+=3600000){
     const x = (x0-t0)/span*w, hr = parseInt(hf.format(new Date(x0)),10)%24;
-    g.fillRect(Math.min(Math.round(x),w-1), barH, 1, k%3?3:6);
-    if (k%6===0 && x0<t1) g.fillText(hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p', Math.min(Math.max(x,12),w-12), h-1);
+    g.fillRect(Math.min(Math.round(x),w-1), barH, tick, (k%3?3:6)*tick);
+    if (k%6===0 && x0<t1) g.fillText(hr===0?'12a':hr===12?'12p':hr<12?hr+'a':(hr-12)+'p', Math.min(Math.max(x,fs*1.1),w-fs*1.1), h-(big ? 3 : 1));
   }
   const mx = (t-t0)/span*w; g.fillStyle = cssv('--fg'); g.fillRect(mx-1,0,2,barH);
-  g.beginPath(); g.moveTo(mx-6,0); g.lineTo(mx+6,0); g.lineTo(mx,7); g.closePath(); g.fill();
+  g.fillRect(mx-tick, 0, 2*tick, barH);
+  g.beginPath(); g.moveTo(mx-6*tick,0); g.lineTo(mx+6*tick,0); g.lineTo(mx,7*tick); g.closePath(); g.fill();
 }
 
 // ---------- map (OpenStreetMap via Leaflet) ----------
@@ -251,7 +253,7 @@ function domeFrame(){
       : `${vYaw.toFixed(0)}° true ${DIRS16[Math.round(vYaw/22.5)%16]}<small>Flat = top view · upright = side view</small>`;
   } else {
     $('domeRead').innerHTML = s.events === 0
-      ? `No motion readings yet<small>${navigator.brave ? 'Brave blocks sensors: use Safari, or turn Shields off for this site' : 'Check Motion & Orientation access, then reload'}</small>`
+      ? `No motion readings yet<small>${sensorHelp()}</small>`
       : 'Waiting for compass…<small>Move the phone in a figure 8</small>';
   }
   requestAnimationFrame(domeFrame);
@@ -261,6 +263,12 @@ function setDomeLive(on){
   $('domeLive').setAttribute('aria-pressed', on); $('domeLive').textContent = on ? 'Freeze' : 'Live';
   $('domeRead').hidden = !on; $('domeHint').hidden = on;
   if (on){ vYaw = null; vPitch = null; requestAnimationFrame(domeFrame); }
+}
+if (NO_SENSORS){
+  $('domeLive').hidden = true;
+  $('arGo').hidden = true;
+  $('arStart').querySelector('p').textContent = 'Live view and the Camera overlay need a phone or tablet with a compass. On this computer, use Times, Dome (drag to spin) and Map.';
+  $('arStart').querySelector('.muted').hidden = true;
 }
 $('domeLive').addEventListener('click', async () => {
   if (domeLive){ setDomeLive(false); toast('Frozen · drag to spin'); return; }
@@ -278,6 +286,18 @@ function setInfo(show){
 }
 $('infoToggle').addEventListener('click', () => setInfo($('sunInfo').hidden));
 setInfo(store.get('infoShown', true));
+
+// ---------- Normal / Big text for the bottom sun info (for a computer screen; the switch shows on wide screens only) ----------
+const WIDE = window.matchMedia('(min-width:700px)');
+const bigInfo = () => document.body.classList.contains('big-info') && WIDE.matches;
+function setBig(on){
+  document.body.classList.toggle('big-info', on); store.set('bigInfo', on);
+  $('sizeToggle').setAttribute('aria-pressed', on); $('sizeToggle').textContent = on ? 'Aa Normal text' : 'Aa Big text';
+  setTimeout(() => { if (map) map.invalidateSize(); render(); }, 30);
+}
+$('sizeToggle').addEventListener('click', () => setBig(!document.body.classList.contains('big-info')));
+setBig(store.get('bigInfo', false));
+WIDE.addEventListener('change', () => setTimeout(render, 30));
 
 // keep "now" ticking while live
 setInterval(() => { if (S.live && !document.hidden){ setNow(); render(); } }, 30000);

@@ -13,8 +13,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="vendor/leaflet.css?v=10">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="vendor/leaflet.css?v=13">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 <div class="app">
@@ -107,7 +107,10 @@
     </section>
   </main>
 
-  <button type="button" class="info-toggle" id="infoToggle" aria-expanded="true" aria-controls="sunInfo"><span class="grip" aria-hidden="true"></span><span id="infoToggleText">Hide sun info</span></button>
+  <div class="info-bar">
+    <button type="button" class="info-toggle" id="infoToggle" aria-expanded="true" aria-controls="sunInfo"><span class="grip" aria-hidden="true"></span><span id="infoToggleText">Hide sun info</span></button>
+    <button type="button" class="size-toggle" id="sizeToggle" aria-pressed="false" title="Switch the sun info between normal and big text">Aa Big text</button>
+  </div>
   <div id="sunInfo">
   <section class="strip">
     <div style="--c:var(--sun-edge)"><b>Sun</b><span class="data" id="sNow">—</span></div>
@@ -134,15 +137,15 @@
   <div class="toast" id="toast" hidden></div>
 </div>
 
-<script src="vendor/leaflet.js?v=10"></script>
-<script src="sun.js?v=10"></script>
-<script src="moon.js?v=10"></script>
-<script src="planets.js?v=10"></script>
-<script src="events.js?v=10"></script>
-<script src="dome.js?v=10"></script>
-<script src="motion.js?v=10"></script>
-<script src="ar.js?v=10"></script>
-<script src="app.js?v=10"></script>
-<script src="infopages.js?v=10"></script>
+<script src="vendor/leaflet.js?v=13"></script>
+<script src="sun.js?v=13"></script>
+<script src="moon.js?v=13"></script>
+<script src="planets.js?v=13"></script>
+<script src="events.js?v=13"></script>
+<script src="dome.js?v=13"></script>
+<script src="motion.js?v=13"></script>
+<script src="ar.js?v=13"></script>
+<script src="app.js?v=13"></script>
+<script src="infopages.js?v=13"></script>
 </body>
 </html>

@@ -30,3 +30,10 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Milky Way window shows tonight's window; lunar eclipse notes say when it's actually watchable.
 - Faster date changes and sky list (same results, checked against the previous version).
 - Leaflet bundled in `vendor/`; time zone setting for spots outside the phone's zone; one shared `DELTA_T`.
+
+## v8 (Nov 1, 2026): desktop and Android
+- "Aa Big text" switch on wide screens: bottom sun info text 2.5x, spacing 1.5x, remembered.
+- "Coming up in the sky" moved below the sun lists on the Times tab.
+- Sensor help names the right steps for Brave (desktop and Android), iPhone Safari, Chrome and Samsung Internet.
+- On a computer with no touch screen, Live and Camera show "needs a phone" instead of waiting for a compass.
+- Every release: bump `VERSION` in `sw.js` and all `?v=N` tags in `index.html`, or phones keep the old offline copy.

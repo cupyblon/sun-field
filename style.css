@@ -163,3 +163,48 @@ td .sub{color:var(--muted);font-size:12px}
 .sky-banner>div{display:flex;gap:10px;align-items:flex-start;font-size:14px}
 
 .grid2 .span2{grid-column:1/-1}
+
+
+/* v8: Normal / Big text switch for the bottom sun info. Text 2.5x, spacing and controls 1.5x. Wide screens only. */
+.info-bar{position:relative}
+.size-toggle{display:none;position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);
+  border:1px solid var(--line);background:var(--surface2);color:var(--fg);border-radius:8px;padding:2px 10px;font-size:12px;font-weight:600;cursor:pointer}
+.size-toggle[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+@media (min-width:700px){
+  .size-toggle{display:block}
+  .big-info .info-toggle{font-size:18px;padding:8px 0 9px}
+  .big-info .info-toggle .grip{width:54px;height:6px;border-radius:3px}
+  .big-info .size-toggle{font-size:18px;padding:3px 15px;border-radius:12px}
+  /* info pages: text 2.5x; the panel grows to fit it */
+  .big-info .page{height:auto}
+  .big-info .strip>div,.big-info .page.cols3>div,.big-info .page.cols2>div{padding:10px 18px 12px;border-top-width:4.5px}
+  .big-info .strip b,.big-info .page b{font-size:31px}
+  .big-info .strip .data,.big-info .page .data{font-size:33px}
+  .big-info .page.twi{padding:12px 18px;column-gap:12px;row-gap:6px;border-top-width:4.5px}
+  .big-info .page.twi b{font-size:30px}
+  .big-info .page.twi .rl{font-size:31px}
+  .big-info .page.shadow{gap:21px;padding:12px 24px;border-top-width:4.5px}
+  .big-info .page.shadow svg{width:66px;height:66px}
+  .big-info .sh-rows{gap:9px}
+  .big-info .sh-rows .muted{font-size:31px}
+  .big-info .sh-rows .data{font-size:35px}
+  .big-info .sh-edit{padding:4px 14px;border-radius:12px;font-size:31px}
+  .big-info #shInput{width:240px;font-size:35px;padding:6px 12px}
+  .big-info .page.phases>div{padding:9px 6px;border-top-width:4.5px}
+  .big-info .page.phases svg{width:45px;height:45px}
+  .big-info .page.phases b,.big-info .page.phases .data{font-size:29px}
+  .big-info .page.skytoday{gap:5px;padding:10px 40px 9px;border-top-width:4.5px}
+  .big-info .sk-row{font-size:30px;gap:12px}
+  .big-info .sk-ic{width:36px}
+  .big-info .sk-more{font-size:27px}
+  .big-info .pg-arrow{font-size:33px;padding:9px 5px}
+  .big-info .strip.pages>.dots{gap:10px;padding:5px 0 8px}
+  .big-info .dots button{width:11px;height:11px}
+  /* date / time / timeline bar */
+  .big-info .timebar{padding:9px 18px}
+  .big-info .time-row{gap:15px;margin-bottom:8px}
+  .big-info .time-row input{font-size:35px;padding:8px 12px;border-radius:12px}
+  .big-info .big-time{font-size:50px}
+  .big-info .time-row .chip{font-size:32px;padding:8px 20px;border-radius:14px}
+  .big-info #tl{height:90px}
+}
