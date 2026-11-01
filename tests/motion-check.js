@@ -16,7 +16,8 @@ const url = process.argv[2] || `http://localhost:${server.address().port}/`;
 (async () => {
   const browser = await chromium.launch(process.env.PW_CHROMIUM ? {executablePath: process.env.PW_CHROMIUM} : {});
   const ctx = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true});
-  await ctx.addInitScript(() => { DeviceOrientationEvent.requestPermission = () => Promise.resolve('granted'); });
+  await ctx.addInitScript(() => { DeviceOrientationEvent.requestPermission = () => Promise.resolve('granted');
+    try { localStorage.setItem('sf-seenVersion', '"0"'); localStorage.setItem('sf-welcomed', 'true'); } catch(e){} });   // returning visitor: no welcome sheet
   const page = await ctx.newPage(); await page.goto(url); await page.waitForTimeout(800);
   // an iPhone reading: alpha is the gyro's arbitrary zero (here 40° off), H the magnetic compass heading of the top edge
   const feed = (alpha, beta, H) => page.evaluate(([a, b, H]) => {

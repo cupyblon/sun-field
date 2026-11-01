@@ -64,6 +64,11 @@ Everything is calculated on the device with the NOAA solar equations (solstices 
 - Clearer privacy wording (GitHub hosting and OpenStreetMap map images see your IP address).
 - New tests: offline Map, and the iPhone pause/offset check.
 
+## v13 (Nov 1, 2026): ready to share
+- First visit: welcome with "Use my location" on top of How to use.
+- About: Support Sun Field (Lightning, Bitcoin with QR codes, Cash App, Venmo) and Send feedback by email.
+- Golden/blue hour modes renamed Extended / Classic.
+
 ## How accurate is it?
 
 Everything is calculated on the device. Each engine was checked against an independent source:

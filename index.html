@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 <div class="app">
@@ -168,6 +168,11 @@
   <div class="sheet" id="aboutSheet" hidden role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
     <div class="sheet-card about">
       <div class="sheet-head"><h2 id="aboutTitle">Sun Field</h2><button type="button" class="chip" id="aboutClose">Close</button></div>
+      <div class="welcome" id="welcome" hidden>
+        <p><b>Welcome to Sun Field.</b> It works out sunrise, work light, shadows and the sky for wherever you are. Start with your location:</p>
+        <div class="row-btns"><button type="button" class="big-btn" id="welcomeLocate">Use my location</button><button type="button" class="chip" id="welcomeSkip">Not now</button></div>
+        <p class="muted small" id="welcomeNote">Your location stays on your phone. "Not now" shows Brookfield, IL; tap <b>Locate</b> at the top any time.</p>
+      </div>
       <div class="about-tabs" role="tablist">
         <button type="button" role="tab" data-at="howto">How to use</button><button type="button" role="tab" data-at="tips">Tips</button><button type="button" role="tab" data-at="acc">Accuracy</button><button type="button" role="tab" data-at="me">About</button>
       </div>
@@ -191,6 +196,8 @@
           <li><b>Plan shade and spacing.</b> On the Shadow page, set an object's height (a fence, a tree, a panel) and drag the time to see how long its shadow gets.</li>
           <li><b>Full-screen Dome or Map.</b> Tap <i>Hide sun info</i>. On a computer, <i>Aa Big text</i> makes the sun info easy to read across the room.</li>
           <li><b>Somewhere else?</b> Tap the map or type coordinates in Settings, and pick that place's time zone if it's different from your phone's.</li>
+          <li><b>Find it useful?</b> ⓘ › About › Support Sun Field.</li>
+          <li><b>Tell me what you think.</b> ⓘ › About › Send feedback. Which phone and browser you used helps a lot.</li>
           <li><b>Sky events.</b> The Times tab lists the next 30 days: full moons, meteor peaks with the best hour to look, eclipses you can see from your spot, and the moon passing planets.</li>
         </ul>
       </div>
@@ -211,23 +218,43 @@
       <div class="about-body" data-ap="me" hidden>
         <p><b>Built by Fernando Villalpando.</b> IT manager with more than 20 years in enterprise IT, networking and field service, and a U.S. Army veteran. I built Sun Field to know exactly how much daylight I have for outdoor work, then kept going: the moon, the planets, and the sky events worth stepping outside for.</p>
         <p>All the math runs on your device. No account, no ads, no analytics.</p>
-        <p><b>Contact and feedback</b><br><a href="https://github.com/cupyblon" target="_blank" rel="noopener">github.com/cupyblon</a><br><a href="https://github.com/cupyblon/sun-field/issues" target="_blank" rel="noopener">Report a problem or suggest a feature</a></p>
+        <section class="support" aria-labelledby="supportTitle">
+          <h3 id="supportTitle">Support Sun Field</h3>
+          <p>Sun Field is free, with no ads and no tracking. It's built for people who earn a living outdoors (landscapers, contractors, farmers, solar crews, photographers) and anyone who spends their days outside.</p>
+          <p>If it saves you time on the job or helps you plan your day, a <b>$3–5 tip, about the price of a coffee,</b> keeps it free and pays for new features.</p>
+          <ul class="tip-list">
+            <li><span class="tip-ic" aria-hidden="true">⚡</span><span><b>Lightning</b><span class="data">fvillalpando@strike.me</span></span>
+              <span class="row-btns"><button type="button" class="chip" data-copy="fvillalpando@strike.me" data-what="Lightning address">Copy</button><button type="button" class="chip" data-qr="qrLn" aria-expanded="false">QR</button></span>
+              <img id="qrLn" class="qr" src="img/qr-lightning.svg" alt="QR code for the Lightning address fvillalpando@strike.me" width="198" height="198" hidden></li>
+            <li><span class="tip-ic" aria-hidden="true">₿</span><span><b>Bitcoin</b><span class="data" title="bc1qpjufy4c0hcxngqjhjw5m490fq83w9j93e87nx4">bc1qpjuf…87nx4</span></span>
+              <span class="row-btns"><button type="button" class="chip" data-copy="bc1qpjufy4c0hcxngqjhjw5m490fq83w9j93e87nx4" data-what="Bitcoin address">Copy</button><a class="chip" href="bitcoin:bc1qpjufy4c0hcxngqjhjw5m490fq83w9j93e87nx4">Open in wallet</a><button type="button" class="chip" data-qr="qrBtc" aria-expanded="false">QR</button></span>
+              <img id="qrBtc" class="qr" src="img/qr-bitcoin.svg" alt="QR code for the Bitcoin address" width="222" height="222" hidden></li>
+            <li><span class="tip-ic" aria-hidden="true">$</span><span><b>Cash App</b><span class="data">$Fvillalpando</span></span>
+              <span class="row-btns"><a class="chip" href="https://cash.app/$Fvillalpando" target="_blank" rel="noopener">Open Cash App</a></span></li>
+            <li><span class="tip-ic" aria-hidden="true">V</span><span><b>Venmo</b><span class="data">@cupyblon</span></span>
+              <span class="row-btns"><a class="chip" href="https://venmo.com/u/cupyblon" target="_blank" rel="noopener">Open Venmo</a></span></li>
+          </ul>
+          <p>Thank you.</p>
+        </section>
+        <p><b>Feedback</b><br>Tell me what works, what confuses you and what breaks. It helps to say which phone and browser you used.</p>
+        <div class="row-btns"><a class="big-btn fb-btn" id="feedbackMail" href="#">Send feedback by email</a></div>
+        <p class="small"><a href="https://github.com/cupyblon/sun-field/issues" target="_blank" rel="noopener">Report a problem on GitHub</a> · <a href="https://github.com/cupyblon" target="_blank" rel="noopener">github.com/cupyblon</a></p>
         <p class="muted small">Version <span id="appVersion"></span> · Open source (Apache 2.0) · Map data © OpenStreetMap contributors · Magnetic model: NOAA WMM2025 (via magvar, MIT) · Maps: Leaflet</p>
       </div>
     </div>
   </div>
 </div>
 
-<script src="sun.js?v=20"></script>
-<script src="moon.js?v=20"></script>
-<script src="planets.js?v=20"></script>
-<script src="events.js?v=20"></script>
-<script src="dome.js?v=20"></script>
-<script src="motion.js?v=20"></script>
-<script src="ar.js?v=20"></script>
-<script src="app.js?v=20"></script>
-<script src="infopages.js?v=20"></script>
-<script src="vendor/magvar.js?v=20"></script>
-<script src="sheets.js?v=20"></script>
+<script src="sun.js?v=22"></script>
+<script src="moon.js?v=22"></script>
+<script src="planets.js?v=22"></script>
+<script src="events.js?v=22"></script>
+<script src="dome.js?v=22"></script>
+<script src="motion.js?v=22"></script>
+<script src="ar.js?v=22"></script>
+<script src="app.js?v=22"></script>
+<script src="infopages.js?v=22"></script>
+<script src="vendor/magvar.js?v=22"></script>
+<script src="sheets.js?v=22"></script>
 </body>
 </html>

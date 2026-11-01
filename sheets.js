@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '20';
+  const APP_VERSION = '22';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;
@@ -149,8 +149,47 @@
   $('aboutBtn').addEventListener('click', () => { aboutTab(store.get('aboutTab', 'howto')); openSheet('aboutSheet'); });
   $('aboutClose').addEventListener('click', () => closeSheet('aboutSheet'));
 
-  // ---------- "updated" notice: once, the first time a new version opens ----------
+  // ---------- feedback: an email with the version and device filled in (address assembled here, not in the page,
+  // so address-harvesting bots reading the HTML don't pick it up) ----------
+  $('feedbackMail').addEventListener('click', e => {
+    e.preventDefault();
+    const to = ['villalpando.fernando.jr', 'gmail.com'].join('@'), ua = navigator.userAgent;
+    const browser = navigator.brave ? 'Brave' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /CriOS|Chrome/.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : 'other';
+    const device = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : 'computer';
+    const body = `What worked:\n\nWhat was confusing:\n\nWhat didn't work:\n\n---\nSun Field version ${APP_VERSION} · ${device} · ${browser}`;
+    location.href = `mailto:${to}?subject=${encodeURIComponent('Sun Field feedback')}&body=${encodeURIComponent(body)}`;
+  });
+
+  // ---------- Support: copy an address, show or hide a QR code ----------
+  async function copyText(text){
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch(e){                                          // older browsers: copy through a hidden text box
+      const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch(_){} t.remove(); return ok;
+    }
+  }
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    toast(await copyText(b.dataset.copy) ? `${b.dataset.what} copied` : `Copy didn't work: ${b.dataset.copy}`);
+  }));
+  document.querySelectorAll('[data-qr]').forEach(b => b.addEventListener('click', () => {
+    const img = $(b.dataset.qr), show = img.hidden; img.hidden = !show; b.setAttribute('aria-expanded', show); b.textContent = show ? 'Hide QR' : 'QR';
+  }));
+
+  // ---------- first visit: welcome + location, with How to use underneath ----------
   const seen = store.get('seenVersion', null);
+  if (seen === null && !store.get('welcomed', false)){
+    setTimeout(() => { $('welcome').hidden = false; aboutTab('howto'); openSheet('aboutSheet'); }, 500);
+    const done = () => { store.set('welcomed', true); $('welcome').hidden = true; };
+    $('welcomeSkip').addEventListener('click', () => { done(); toast('Showing Brookfield, IL · tap Locate any time'); });
+    $('welcomeLocate').addEventListener('click', async () => {
+      $('welcomeLocate').disabled = true; $('welcomeNote').textContent = 'Finding you…';
+      const pos = await gpsFix();
+      if (pos && pos.coords){ setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); done(); toast('Location set'); }
+      else { $('welcomeLocate').disabled = false; $('welcomeNote').textContent = pos && pos.code === 1 ? 'Location access was declined. You can allow it in your browser settings, or tap Not now.' : 'Could not get a fix. Try again, or tap Not now.'; }
+    });
+    $('aboutClose').addEventListener('click', () => { if (!$('welcome').hidden){ store.set('welcomed', true); $('welcome').hidden = true; } });
+  }
+  // ---------- "updated" notice: once, the first time a new version opens ----------
   if (seen && seen !== APP_VERSION) setTimeout(() => toast(`Sun Field updated to version ${APP_VERSION}`), 600);
   store.set('seenVersion', APP_VERSION);
 })();
