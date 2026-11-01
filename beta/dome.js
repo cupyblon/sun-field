@@ -1,8 +1,10 @@
 /* 3D sky dome with toggleable layers, like Sun Surveyor's 3D Compass.
-   Needs sun.js loaded first. createDome(canvas, colors) returns {draw(state), setView(name), setLayers(obj), layers}.
+   Needs sun.js, moon.js and planets.js. createDome(canvas, colors, layers) returns
+   {draw(state), setView(name), setLayers(obj), setCamera(yaw, pitch), getCamera(), layers}.
    state = {t, t0, t1, lat, lon, Y, tz}; colors() returns CSS colors.
    Layers: altaz (horizon grid), celestial (equatorial grid + poles), sphere (below-horizon half + night path),
-           seasons (Jun/equinox/Dec paths), bearings (sunrise/sunset/sun lines + shadow), hours (hour labels). */
+           seasons (Jun/equinox/Dec paths), bearings (sunrise/sunset/sun/moon lines + shadow), hours (hour labels),
+           moon (today's track and phase), planets, stars (bright stars + Big Dipper). */
 const DOME_LAYERS = [
   ['altaz',     'Horizon grid',    'Altitude rings and compass lines'],
   ['celestial', 'Celestial grid',  'Tilted to your latitude, with the celestial poles'],
@@ -69,9 +71,8 @@ function createDome(canvas, colors, initialLayers){
     const sunTrack = (a,b,step=5) => { const out=[]; for (let u=a;u<=b;u+=step*60000){ const p=sunPos(u,lat,lon); out.push([p.az,p.alt]); } return out; };
     const today = cached('st|'+t0+'|'+lat+'|'+lon, () => sunTrack(t0,t1));
     const hourly = (key, fn) => cached(key+'|'+t0+'|'+lat+'|'+lon+'|'+tz, () => { const out = []; for (let u=Math.ceil(t0/3600000)*3600000; u<t1; u+=3600000){ const p = fn(u); out.push([p.az, p.alt, hourLbl(u)]); } return out; });
-    const sunHrs = hourly('sh', u => sunPos(u,lat,lon)), moonHrs = (layers.moon && typeof moonPos === 'function') ? hourly('mh', u => moonPos(u,lat,lon)) : [];
-    const moonOn = layers.moon && typeof moonPos === 'function', moonCol = C.moon || '#c8d0e0';
-    const V6 = typeof skyEvents === 'function';   // newest features switch on with the events engine
+    const sunHrs = hourly('sh', u => sunPos(u,lat,lon)), moonHrs = layers.moon ? hourly('mh', u => moonPos(u,lat,lon)) : [];
+    const moonOn = layers.moon, moonCol = C.moon;
     const dayKey = `${t0}|${lat}|${lon}`;
     const moonTrack = moonOn ? cached('mt|'+dayKey, () => { const a=[]; for (let u=t0; u<=t1; u+=10*60000){ const m = moonPos(u,lat,lon); a.push([m.az, m.alt]); } return a; }) : [];
 
@@ -95,7 +96,7 @@ function createDome(canvas, colors, initialLayers){
       runs(today, below, C.night, 2.4, [7,5]);
       if (moonOn){ runs(moonTrack, below, moonCol, 1.4, [2,4]);
         for (const [az,alt,lbl] of moonHrs){ if (alt>0) continue;
-          dot(sky(az,alt),2.2,moonCol); if (layers.hours && V6) text(sky(az,alt-5), lbl, moonCol, 10, 600); } }
+          dot(sky(az,alt),2.2,moonCol); if (layers.hours) text(sky(az,alt-5), lbl, moonCol, 10, 600); } }
       for (const [az,alt,lbl] of sunHrs){ if (alt>=0) continue;
         dot(sky(az,alt),3.2,C.night); if (layers.hours) text(sky(az,alt-5), lbl, C.path, 11, 600); }
     }
@@ -125,7 +126,7 @@ function createDome(canvas, colors, initialLayers){
     if (moonOn){
       runs(moonTrack, above, moonCol, 1.8, [6,3]);
       for (const [az,alt,lbl] of moonHrs){ if (alt<=0) continue;
-        dot(sky(az,alt),2.6,moonCol); if (layers.hours && V6) text(sky(az,alt-5), lbl, moonCol, 10, 600); }
+        dot(sky(az,alt),2.6,moonCol); if (layers.hours) text(sky(az,alt-5), lbl, moonCol, 10, 600); }
     }
     runs(today, above, C.path, 2.6);
     for (const [az,alt,lbl] of sunHrs){ if (alt<=0) continue;
@@ -144,7 +145,7 @@ function createDome(canvas, colors, initialLayers){
       if (np[1] >= 0 || full){ dot(sky(...np), 5, C.celes, C.fg); text(sky(np[0], np[1]+7), lat>=0 ? 'N pole · Polaris' : 'S pole', C.fg, 11, 700); }
       if (sp[1] >= 0 || full){ dot(sky(...sp), 5, C.celes, C.fg); text(sky(sp[0], sp[1]-7), lat>=0 ? 'S pole' : 'N pole', C.fg, 11, 700); }
     }
-    if (typeof planetPos === 'function'){
+    {
       const vis = al => al > 0 || full;
       if (layers.stars){
         const pos = {}; for (const [n,ra,dec] of DIPPER) pos[n] = starPos(ra,dec,t,lat,lon);
@@ -175,11 +176,11 @@ function createDome(canvas, colors, initialLayers){
     if (moonOn){                                   // the Moon now, drawn with its real phase
       const m = cached('mn|'+t+'|'+lat+'|'+lon, () => moonPos(t,lat,lon));
       const mrs = cached('mrs|'+dayKey, () => { const x = moonCrossings(t0, t1, lat, lon); return {rise: x.rise && moonPos(x.rise,lat,lon).az, set: x.set && moonPos(x.set,lat,lon).az}; });
-      if (layers.bearings && V6){
+      if (layers.bearings){
         if (mrs.rise != null) line([O, sky(mrs.rise,0)], moonCol, 1.6, [6,4]);
         if (mrs.set != null)  line([O, sky(mrs.set,0)], moonCol, 1.6, [6,4]);
       }
-      if (V6 && m.alt <= 0 && !full){                    // tell where to look when the Moon is down
+      if (m.alt <= 0 && !full){                    // tell where to look when the Moon is down
         const next = cached('nr|'+Math.floor(t/60000)+'|'+lat+'|'+lon, () => { for (let u=t; u<t+36*3600000; u+=6*3600000){ const r = moonCrossings(u, u+6*3600000, lat, lon); if (r.rise && r.rise > t) return r.rise; } return null; });
         if (next){ const na = moonPos(next,lat,lon).az, tzf = dtf({timeZone:tz,hour:'numeric',minute:'2-digit'});
           ctx.font = `600 12px ${C.font}`; ctx.textAlign='left'; ctx.fillStyle = moonCol;
@@ -232,8 +233,7 @@ function createDome(canvas, colors, initialLayers){
 
 /* Builds the on/off layer panel. host = element to fill; onChange(layers) is called after each toggle. */
 function buildLayerPanel(host, dome, onChange){
-  const have = k => k === 'moon' ? typeof moonPos === 'function' : (k === 'planets' || k === 'stars') ? typeof planetPos === 'function' : true;
-  host.innerHTML = DOME_LAYERS.filter(([k]) => have(k)).map(([k,name,sub]) =>
+  host.innerHTML = DOME_LAYERS.map(([k,name,sub]) =>
     `<button type="button" class="layer" data-k="${k}" aria-pressed="${dome.layers[k]}"><span class="tick" aria-hidden="true"></span><span><b>${name}</b><small>${sub}</small></span></button>`).join('');
   host.querySelectorAll('.layer').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.k, v = !dome.layers[k]; dome.setLayers({[k]: v}); b.setAttribute('aria-pressed', v); if (onChange) onChange(dome.layers);

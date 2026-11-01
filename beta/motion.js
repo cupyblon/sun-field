@@ -25,9 +25,9 @@ function createMotion(opts){
   const getDecl = opts.getDecl || (() => 0), store = opts.store;
   let ori = null, smooth = null, iosOffset = null, granted = false, last = null, handler = null, evName = null;
   const users = new Set();
-  // diagnostics: how many readings arrived, last compass value, whether we're running without true north,
+  // diagnostics: how many readings arrived, whether we're running without true north,
   // the phone's own compass accuracy (iPhone only, degrees), and how much the phone has been turned (for the figure-8 meter)
-  const stat = {events: 0, lastH: undefined, relative: false, accuracy: null, moved: 0};
+  const stat = {events: 0, relative: false, accuracy: null, moved: 0};
   const recent = [];                                   // last ~1.5 s of readings, to tell when the phone is held still
   // Sky correction: set by Align (crosshair on the sun, moon or a planet). Shared by the Camera and the live Dome.
   let cal = Object.assign({dAz:0, dAlt:0}, store ? store.get('arCal', {}) : {});
@@ -45,7 +45,7 @@ function createMotion(opts){
     if (e.alpha == null || e.beta == null || e.gamma == null) return;   // blocked sensors send empty events
     stat.events++;
     const decl = getDecl(), H = e.webkitCompassHeading, acc = e.webkitCompassAccuracy;
-    stat.lastH = H; stat.accuracy = (typeof acc === 'number' && acc >= 0) ? acc : null;
+    stat.accuracy = (typeof acc === 'number' && acc >= 0) ? acc : null;
     if (last) stat.moved += Math.min(30, Math.abs(wrap(e.alpha - last[0])) + Math.abs(e.beta - last[1]) + Math.abs(e.gamma - last[2]));
     last = [e.alpha, e.beta, e.gamma];
     const now = performance.now(); recent.push([now, e.alpha, e.beta, e.gamma]); while (recent.length && now - recent[0][0] > 1500) recent.shift();

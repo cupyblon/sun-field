@@ -9,7 +9,7 @@ const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n)
 const colors = () => ({fg:cssv('--fg'),muted:cssv('--muted'),line:cssv('--domeline'),grid:cssv('--grid'),ground:cssv('--ground'),path:cssv('--path'),
   season:cssv('--season'),rise:cssv('--rise'),set:cssv('--set'),sun:cssv('--sun'),sunEdge:cssv('--sun-edge'),sunLine:cssv('--path'),
   shadow:cssv('--shadow'),north:cssv('--north'),below:cssv('--below'),font:cssv('--font'),
-  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star')});
+  altaz:cssv('--altaz'),celes:cssv('--celes'),night:cssv('--nightpath'),halo:cssv('--halo'),star:cssv('--star'),moon:cssv('--moon')});
 
 // time zone: the phone's own, unless one is picked in Settings (for a spot in another zone)
 const DEVICE_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago';

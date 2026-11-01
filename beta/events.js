@@ -81,7 +81,7 @@ function lunarEclipses(from, to, lat, lon){
       why = [atStart ? (sunUp(s) ? 'after dark' : 'after moonrise') : '', atEnd ? (sunUp(e) ? 'until dawn' : 'until moonset') : ''].filter(Boolean).join(', ');
     }
     out.push({kind:'lunar', type, t: tg, umag: g.umag, pmag: g.pmag, penStart, penEnd, parStart, parEnd, totStart, totEnd,
-              moonAltAtMax: moonPos(tg,lat,lon).alt, visibleFrac: n ? up/n : 0, seeFrom, seeTo: seeTo !== null ? Math.min(e, seeTo + step) : null, why});
+              visibleFrac: n ? up/n : 0, seeFrom, seeTo: seeTo !== null ? Math.min(e, seeTo + step) : null, why});
   }
   return out;
 }
@@ -111,7 +111,7 @@ function solarEclipsesLocal(from, to, lat, lon){
     }
     if (!best || best.t < from || best.t >= to) continue;
     const ob = overlapFrac(best.e.ss, best.e.sm, best.e.sep);
-    out.push({kind:'solar', t: best.t, start, end, mag: best.e.mag, obscuration: ob, sunAltAtMax: best.e.sunAlt});
+    out.push({kind:'solar', t: best.t, start, end, mag: best.e.mag, obscuration: ob});
   }
   return out;
 }
