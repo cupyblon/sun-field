@@ -91,7 +91,7 @@ function seasonInstant(year, target){
 }
 // golden/blue hour definitions (geometric altitude, degrees)
 const DEFS = {
-  ss:      {name:'Sun Surveyor', blue:[-10,-3], gold:[-0.833,10]},
+  ss:      {name:'Extended',     blue:[-10,-3], gold:[-0.833,10]},   // internal key 'ss' kept so saved choices carry over
   classic: {name:'Classic',      blue:[-6,-4],  gold:[-4,6]}
 };
 function dayEvents(Y,M,Dd,lat,lon,tz,mode){
@@ -102,7 +102,7 @@ function dayEvents(Y,M,Dd,lat,lon,tz,mode){
     bLo:X(d.blue[0]), bHi:X(d.blue[1]), gLo:X(d.gold[0]), gHi:X(d.gold[1]),
     noon: solarNoon(t0,t1,lat,lon)};
 }
-const roundMin = ms => Math.floor(ms/60000)*60000; // drop the seconds, same as Sun Surveyor
+const roundMin = ms => Math.floor(ms/60000)*60000; // times are shown to the minute (seconds dropped)
 const fmtT = (ms,tz) => ms==null ? '—' : dtf({timeZone:tz,hour:'numeric',minute:'2-digit'}).format(new Date(roundMin(ms)));
 const fmtSpanDur = (a,b) => { const m=Math.round((roundMin(b)-roundMin(a))/60000); return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; };
 const fmtDurS = ms => { if (ms==null||ms<0) return '—'; const s=Math.round(ms/1000); return `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m ${s%60}s`; };

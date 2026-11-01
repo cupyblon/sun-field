@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '19';
+  const APP_VERSION = '20';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;

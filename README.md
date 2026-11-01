@@ -70,7 +70,7 @@ Everything is calculated on the device. Each engine was checked against an indep
 
 | What | Checked against | Result |
 |---|---|---|
-| Sunrise, sunset, twilight, golden and blue hour | Sun Surveyor and PyEphem | Within seconds (times shown truncated to the minute, like Sun Surveyor) |
+| Sunrise, sunset, twilight, golden and blue hour | PyEphem | Within seconds (times are shown to the minute, seconds dropped) |
 | Equinoxes and solstices | Meeus, *Astronomical Algorithms* ch. 27 | About a minute |
 | Moonrise and moonset | PyEphem | Within 28 seconds |
 | Moon phases | PyEphem | Within 1 minute |

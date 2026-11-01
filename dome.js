@@ -1,4 +1,4 @@
-/* 3D sky dome with toggleable layers, like Sun Surveyor's 3D Compass.
+/* 3D sky dome with toggleable layers: the sun's path over a compass bowl.
    Needs sun.js, moon.js and planets.js. createDome(canvas, colors, layers) returns
    {draw(state), setView(name), setLayers(obj), setCamera(yaw, pitch), getCamera(), layers}.
    state = {t, t0, t1, lat, lon, Y, tz}; colors() returns CSS colors.

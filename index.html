@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=19">
+<link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <div class="app">
@@ -36,7 +36,7 @@
           <div class="muted small work-caveat">Approximate: trees, clouds and buildings make it darker sooner.</div>
         </div>
         <div class="seg" role="group" aria-label="Golden and blue hour definitions">
-          <button type="button" data-mode="ss">Sun Surveyor</button>
+          <button type="button" data-mode="ss">Extended</button>
           <button type="button" data-mode="classic">Classic</button>
         </div>
         <div class="card"><h2>Morning</h2><table><tbody id="am"></tbody></table></div>
@@ -56,7 +56,7 @@
           <div class="row-btns"><button type="button" id="setCal" class="chip">Calibrate…</button><button type="button" id="homeBtn" class="chip">Reset to Brookfield</button></div>
           <p class="muted small"><a href="https://github.com/cupyblon/sun-field#how-accurate-is-it" target="_blank" rel="noopener">How accurate is it?</a> Checked against NASA, the IMO and PyEphem.</p>
         </div>
-        <p class="muted small foot">Times drop the seconds, like Sun Surveyor. Sun, moon and sky math runs on your phone (NOAA and Meeus equations). Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view. Nothing else leaves your phone. Once opened, it works with no signal.</p>
+        <p class="muted small foot">Times are shown to the minute (seconds dropped). Sun, moon and sky math runs on your phone (NOAA and Meeus equations). Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view. Nothing else leaves your phone. Once opened, it works with no signal.</p>
       </div>
     </section>
 
@@ -173,7 +173,7 @@
       </div>
       <div class="about-body" data-ap="howto">
         <ol class="howto">
-          <li><b>Times</b> Today's light: work light, dawn and dusk, golden and blue hour, solar noon and the seasons. Switch between Sun Surveyor and Classic golden/blue hour.</li>
+          <li><b>Times</b> Today's light: work light, dawn and dusk, golden and blue hour, solar noon and the seasons. Switch between Extended (longer, wider) and Classic golden and blue hours.</li>
           <li><b>Pick a time</b> Drag the light bar at the bottom to any time of day, pick a date, or tap <b>Now</b> to go back to live.</li>
           <li><b>Info pages</b> Swipe the strip above the light bar: Sun, Twilight, Shadow, Moon, Moon phases, Milky Way and Sky today. On Shadow, tap ✎ to set an object's height.</li>
           <li><b>Dome</b> The sky as a 3D bowl: today's sun path, the season paths, the moon, planets and stars. Drag to spin, pinch to zoom, <b>Layers</b> to turn things on or off, <b>Live</b> to make it follow your phone.</li>
@@ -197,7 +197,7 @@
       <div class="about-body" data-ap="acc" hidden>
         <p class="small">Everything is calculated on your device. Each part was checked against an independent source:</p>
         <table class="acc"><tbody>
-          <tr><td>Sunrise, sunset, twilight, golden and blue hour</td><td>within seconds of Sun Surveyor and PyEphem</td></tr>
+          <tr><td>Sunrise, sunset, twilight, golden and blue hour</td><td>within seconds of PyEphem</td></tr>
           <tr><td>Moonrise and moonset</td><td>within 28 seconds</td></tr>
           <tr><td>Moon phases</td><td>within 1 minute</td></tr>
           <tr><td>Planets</td><td>1–5 arcminutes (the full moon is 30 wide)</td></tr>
@@ -218,16 +218,16 @@
   </div>
 </div>
 
-<script src="sun.js?v=19"></script>
-<script src="moon.js?v=19"></script>
-<script src="planets.js?v=19"></script>
-<script src="events.js?v=19"></script>
-<script src="dome.js?v=19"></script>
-<script src="motion.js?v=19"></script>
-<script src="ar.js?v=19"></script>
-<script src="app.js?v=19"></script>
-<script src="infopages.js?v=19"></script>
-<script src="vendor/magvar.js?v=19"></script>
-<script src="sheets.js?v=19"></script>
+<script src="sun.js?v=20"></script>
+<script src="moon.js?v=20"></script>
+<script src="planets.js?v=20"></script>
+<script src="events.js?v=20"></script>
+<script src="dome.js?v=20"></script>
+<script src="motion.js?v=20"></script>
+<script src="ar.js?v=20"></script>
+<script src="app.js?v=20"></script>
+<script src="infopages.js?v=20"></script>
+<script src="vendor/magvar.js?v=20"></script>
+<script src="sheets.js?v=20"></script>
 </body>
 </html>
