@@ -33,6 +33,16 @@ A last full pass over the whole repo at commit `b73746a` (app version 24), after
 | 3 | Low (behavior) | Replaying the tour switches to the Camera tab; if the camera was already used in that session, it turns back on during the tour. The first tour never does this. | Have the tour show the Camera screen without restarting the camera. |
 | 4 | Info (hardening) | No Content-Security-Policy. Low risk for a static site with no user accounts or user-supplied HTML. | Optional: a CSP meta tag allowing only the app's own files plus OpenStreetMap tiles. |
 
+## Follow-up: fixed in app version 26
+
+Findings 1–3 were approved and fixed; finding 4 (CSP) was left as optional.
+
+| # | Fix | How it was checked |
+|---|---|---|
+| 1 | Title is an `<h1>` (same look: 17 px bold, same height); the sun-info panel has `role="region"` and a label | axe-core rescan of every screen: **no violations** |
+| 2 | Work light card: "All day" + midnight-sun note; "None" when the sky never gets light; "twilight only" note when the sun doesn't rise but civil twilight exists | Extreme-places run: Tromsø summer/winter, McMurdo, both poles, plus normal places unchanged |
+| 3 | While the tour runs, the Camera tab shows its start screen and leaves the camera off | New step in `tests/tour-check.js`: fails on app version 24, passes on 26; afterwards the Camera tab turns the camera on as normal |
+
 ## Not covered by automated tests (check by hand)
 
 - **Real phone sensors:** Calibrate, Align and Live on an actual iPhone and Android phone.

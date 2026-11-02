@@ -80,8 +80,18 @@ function renderTimes(st){
   const row = (sw,name,sub,time,dur) => `<tr><td><span class="sw" style="background:var(${sw})"></span>${name}${sub?`<div class="sub">${sub}</div>`:''}</td><td class="t">${time}${dur?`<span class="d">${dur}</span>`:''}</td></tr>`;
   const span = (a,b) => a&&b ? [`${fmtT(a,tz)} – ${fmtT(b,tz)}`, `(${fmtSpanDur(a,b)})`] : ['does not occur',''];
   const az = ms => ms ? ` @ ${sunPos(ms,lat,lon).az.toFixed(1)}°` : '';
-  $('workStart').textContent = fmtT(ev.civ.rise,tz); $('workEnd').textContent = fmtT(ev.civ.set,tz);
-  $('workNote').textContent = ev.civ.rise && ev.sun.rise ? `Usable light starts ${Math.round((ev.sun.rise-ev.civ.rise)/60000)} min before sunrise and lasts ${Math.round((ev.civ.set-ev.sun.set)/60000)} min after sunset.` : 'Civil dawn to civil dusk: enough natural light to work outside.';
+  // Near the poles the sun can stay up (or the sky stay light) all day, or never rise: say so instead of "— to —"
+  const noonAlt = sunPos(ev.noon,lat,lon).altGeo, allDayLight = !ev.civ.rise && !ev.civ.set && noonAlt > -6, noLight = !ev.civ.rise && !ev.civ.set && noonAlt <= -6;
+  $('workStart').textContent = allDayLight ? 'All day' : noLight ? 'None' : fmtT(ev.civ.rise,tz);
+  $('workEnd').textContent = allDayLight || noLight ? '' : fmtT(ev.civ.set,tz);
+  document.querySelector('.work-row .muted').hidden = allDayLight || noLight;
+  $('workNote').textContent =
+      allDayLight && !ev.sun.rise && !ev.sun.set && noonAlt > 0 ? "Midnight sun: the sun doesn't set today, so there's work light around the clock."
+    : allDayLight ? "The sun dips below the horizon but the sky stays light enough to work all night."
+    : noLight ? "The sun doesn't rise today and the sky never gets light enough to work outside."
+    : !ev.sun.rise && !ev.sun.set ? "The sun doesn't rise today. This is twilight only, a few hours of dim light."
+    : ev.civ.rise && ev.sun.rise && ev.civ.set && ev.sun.set ? `Usable light starts ${Math.round((ev.sun.rise-ev.civ.rise)/60000)} min before sunrise and lasts ${Math.round((ev.civ.set-ev.sun.set)/60000)} min after sunset.`
+    : 'Civil dawn to civil dusk: enough natural light to work outside.';
   $('am').innerHTML =
     row('--astro','Dawn (astronomical)','sun at −18°',fmtT(ev.astro.rise,tz)) +
     row('--naut','Dawn (nautical)','can see shapes and the horizon',fmtT(ev.naut.rise,tz)) +

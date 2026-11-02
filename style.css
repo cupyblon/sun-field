@@ -22,7 +22,7 @@ button{font:inherit;color:inherit}
   padding:calc(env(safe-area-inset-top,0px) + 8px) max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));
   background:var(--surface);border-bottom:1px solid var(--line)}
 .place{display:flex;flex-direction:column;min-width:0}
-.place strong{font-size:17px;letter-spacing:-.01em}
+.place strong,.place .app-title{font-size:17px;letter-spacing:-.01em;font-weight:700;margin:0;line-height:20px}
 .place span{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip{border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .chip:active{border-color:var(--accent)}

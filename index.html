@@ -13,13 +13,13 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=24">
+<link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="place">
-      <strong>Sun Field</strong>
+      <h1 class="app-title">Sun Field</h1>
       <span id="placeLabel" class="muted"></span>
     </div>
     <div class="top-btns"><button type="button" id="aboutBtn" class="chip" aria-label="About, how to use, tips">ⓘ</button><button type="button" id="locateBtn" class="chip">Locate</button></div>
@@ -114,7 +114,7 @@
     <button type="button" class="info-toggle" id="infoToggle" aria-expanded="true" aria-controls="sunInfo"><span class="grip" aria-hidden="true"></span><span id="infoToggleText">Hide sun info</span></button>
     <button type="button" class="size-toggle" id="sizeToggle" aria-pressed="false" title="Switch the sun info between normal and big text">Aa Big text</button>
   </div>
-  <div id="sunInfo">
+  <div id="sunInfo" role="region" aria-label="Sun info: light times and the time of day">
   <section class="strip">
     <div style="--c:var(--sun-edge)"><b>Sun</b><span class="data" id="sNow">—</span></div>
     <div style="--c:var(--rise)"><b>Sunrise</b><span class="data" id="sRise">—</span></div>
@@ -246,17 +246,17 @@
   </div>
 </div>
 
-<script src="sun.js?v=24"></script>
-<script src="moon.js?v=24"></script>
-<script src="planets.js?v=24"></script>
-<script src="events.js?v=24"></script>
-<script src="dome.js?v=24"></script>
-<script src="motion.js?v=24"></script>
-<script src="ar.js?v=24"></script>
-<script src="app.js?v=24"></script>
-<script src="infopages.js?v=24"></script>
-<script src="vendor/magvar.js?v=24"></script>
-<script src="sheets.js?v=24"></script>
-<script src="tour.js?v=24"></script>
+<script src="sun.js?v=26"></script>
+<script src="moon.js?v=26"></script>
+<script src="planets.js?v=26"></script>
+<script src="events.js?v=26"></script>
+<script src="dome.js?v=26"></script>
+<script src="motion.js?v=26"></script>
+<script src="ar.js?v=26"></script>
+<script src="app.js?v=26"></script>
+<script src="infopages.js?v=26"></script>
+<script src="vendor/magvar.js?v=26"></script>
+<script src="sheets.js?v=26"></script>
+<script src="tour.js?v=26"></script>
 </body>
 </html>

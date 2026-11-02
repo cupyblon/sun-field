@@ -16,6 +16,12 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 `?v=N` number the offline copy uses). The older notes below are labelled v2–v14; those were release counts, not app versions.
 v14 below is app version 23.
 
+## App version 26 (Nov 1, 2026): final-review fixes
+- The title is the page's main heading and the sun-info panel is a named region (accessibility scan: no violations).
+- Work light near the poles: "All day" with a midnight-sun note, or "None" / "twilight only" when the sun doesn't rise.
+- Replaying the tour no longer turns the camera back on at the Camera step.
+- Tour test extended for the camera case. Details: `docs/code-review-final-2026-11-01.md`.
+
 ## App version 24 (Nov 1, 2026): tour accessibility, tour test
 - Guided tour: keyboard focus returns to the Times tab when it ends (to ⓘ after a replay); the app behind it is inert while it runs.
 - New `tests/tour-check.js`: first-visit welcome and the full tour, online and offline.

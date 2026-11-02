@@ -192,7 +192,12 @@ function createAR(opts){
   $('arGo').addEventListener('click', start);
 
   return {
-    show(){ visible = true; if (started) motion.use('ar', true); resume(); },
+    show(){
+      visible = true;
+      if (document.body.classList.contains('touring')){ $('arStart').hidden = false; return; }   // tour: show the start screen only, camera stays off
+      if (started){ $('arStart').hidden = true; motion.use('ar', true); }
+      resume();
+    },
     hide(){ visible = false; motion.use('ar', false); stopCamera(); }
   };
 }
