@@ -3,7 +3,7 @@
    Checks: welcome shows for a new visitor → closing it starts the tour → all 7 steps land on the right screen with the
    card fully on screen → the app behind is inert while the tour runs → Done ends on Times with focus on the Times tab →
    the tour doesn't repeat after a reload → replay from How to use, Escape skips and focus returns to ⓘ → the whole
-   first-visit flow again with the network off.
+   first-visit flow again with the network off. Also: after using the camera, a replayed tour leaves it off.
    Needs Playwright (see tests/offline-check.js).  Usage: node tests/tour-check.js [url]   (default: serves the repo) */
 const fs = require('fs'), path = require('path'), http = require('http');
 const { chromium } = require('playwright');
@@ -19,8 +19,10 @@ const EXPECT = [['Home: Times','times'], ['Pick a time','times'], ['Info pages',
 (async () => {
   const results = []; let ok = true;
   const step = (name, pass, info) => { ok = ok && pass; results.push(`${pass ? '✓' : '✗'} ${name}${info ? ' · ' + info : ''}`); };
-  const browser = await chromium.launch(process.env.PW_CHROMIUM ? {executablePath: process.env.PW_CHROMIUM} : {});
-  const ctx = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true});
+  const browser = await chromium.launch({...(process.env.PW_CHROMIUM ? {executablePath: process.env.PW_CHROMIUM} : {}),
+    args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']});               // a fake camera for the Camera tab
+  const ctx = await browser.newContext({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true, permissions: ['camera']});
+  await ctx.addInitScript(() => { if (window.DeviceOrientationEvent) DeviceOrientationEvent.requestPermission = () => Promise.resolve('granted'); });
   await ctx.route('**/tile.openstreetmap.org/**', r => r.abort());
   const page = await ctx.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
 
@@ -60,6 +62,18 @@ const EXPECT = [['Home: Times','times'], ['Pick a time','times'], ['Info pages',
     await page.click('#aboutBtn'); await page.click('.about-tabs button[data-at=howto]'); await page.click('#tourAgain'); await page.waitForTimeout(700);
     await page.click('#tourSkip'); await page.waitForTimeout(300);
     step('Skip tour ends it', await page.evaluate(() => document.querySelector('.tour').hidden && !document.querySelector('.app').inert));
+    // camera used earlier, then the tour replayed: the Camera step must not turn the camera back on
+    await page.evaluate(() => show('ar')); await page.click('#arGo'); await page.waitForTimeout(800);
+    const camOn = await page.evaluate(() => !!document.getElementById('arVideo').srcObject);
+    await page.evaluate(() => show('times')); await page.waitForTimeout(200);
+    await page.click('#aboutBtn'); await page.click('.about-tabs button[data-at=howto]'); await page.click('#tourAgain'); await page.waitForTimeout(700);
+    for (let k = 0; k < 4; k++){ await page.click('#tourNext'); await page.waitForTimeout(500); }   // to step 5, Camera
+    const atCam = await page.evaluate(() => ({title: document.getElementById('tourTitle').textContent, camera: !!document.getElementById('arVideo').srcObject, startScreen: !document.getElementById('arStart').hidden}));
+    step('Tour replay after using the camera: Camera step leaves the camera off', camOn && atCam.title === 'Camera' && !atCam.camera && atCam.startScreen, `camera was on before: ${camOn}; at step: ${JSON.stringify(atCam)}`);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    await page.evaluate(() => show('ar')); await page.waitForTimeout(800);
+    step('After the tour, the Camera tab turns the camera back on as normal', await page.evaluate(() => !!document.getElementById('arVideo').srcObject && document.getElementById('arStart').hidden));
+    await page.evaluate(() => show('times'));
     // ---- offline: same first visit, from the saved copy ----
     await page.evaluate(() => navigator.serviceWorker.ready); await page.reload(); await page.waitForTimeout(800);
     await page.evaluate(() => { for (const k of ['seenVersion', 'welcomed', 'toured']) localStorage.removeItem('sf-' + k); });
