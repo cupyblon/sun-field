@@ -51,7 +51,9 @@ function bump(){                       // what a release does: every version num
     await page.evaluate(() => show('map')); await page.waitForTimeout(1500);
     const mapOk = await page.evaluate(() => typeof L !== 'undefined' && !!document.querySelector('#map .leaflet-container, #map.leaflet-container') && document.querySelectorAll('#map path').length > 5);
     step('6 Open the Map tab offline', mapOk, await page.evaluate(() => `map library ${typeof L !== 'undefined' ? L.version : 'missing'}, ${document.querySelectorAll('#map path').length} lines drawn`));
-    const caches_ = await page.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('sf-app')));
+    // the new copy finishes saving in the background, then the old one is deleted: allow it up to 6 s
+    let caches_ = [];
+    for (let k = 0; k < 12; k++){ caches_ = await page.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('sf-app'))); if (caches_.length === 1) break; await page.waitForTimeout(500); }
     step('Old offline copy cleaned up', caches_.length === 1, caches_.join(', '));
     step('No page errors', errors.length === 0, errors.join(' | '));
   } catch (e){ step('Check ran', false, e.message); }

@@ -16,6 +16,9 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 `?v=N` number the offline copy uses). The older notes below are labelled v2–v14; those were release counts, not app versions.
 v14 below is app version 23.
 
+## App version 30 (Nov 2, 2026): Dashboard is the default
+- The Dashboard layout now opens by default. ▦ switches to Classic, and the choice is remembered.
+
 ## App version 29 (Nov 2, 2026): Dashboard layout (idea and mockup by Jimmy Villalpando)
 - A second layout, switched with the ▦ button in the header (remembered). Classic stays the default and is unchanged.
 - Big icon tabs at the top: Today, Sun, Moon, Planets, Events, Camera, Dome, Map (a swipe row on a phone, 8 across on wider screens).

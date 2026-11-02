@@ -160,7 +160,7 @@
   window.sfSetLayout = setLayout;
   window.sfLayout = () => document.body.classList.contains('layout-dash') ? 'dash' : 'classic';
   $('layoutBtn').addEventListener('click', () => { if (S.view !== 'times') show('times'); setLayout(window.sfLayout() === 'dash' ? 'classic' : 'dash'); });
-  setLayout(store.get('layout', 'classic'), true);
+  setLayout(store.get('layout', 'dash'), true);
 
   // ---------- helpers ----------
   const R2 = Math.PI/180;
