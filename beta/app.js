@@ -69,6 +69,7 @@ function render(){
   $('sSet').textContent  = ev.sun.set  ? `${fmtT(ev.sun.set,tz)}\n${sunPos(ev.sun.set,lat,lon).az.toFixed(1)}°` : '—';
   $('timeLabel').textContent = fmtT(t,tz);
   $('placeLabel').textContent = S.place + (S.tz !== DEVICE_TZ ? ` · ${tzAbbr(t, S.tz)}` : '');
+  $('locateBtn').classList.toggle('locked', S.place.startsWith('Your location'));   // the GPS arrow turns gold while it's your own spot
   drawTimeline(st);
   if (S.view === 'times'){ if (document.body.classList.contains('layout-dash') && typeof renderDash === 'function') renderDash(st); else renderTimes(st); }
   if (S.view === 'dome') dome.draw(st);
@@ -229,10 +230,12 @@ function setLocation(lat, lon, place, recenter=true){
 }
 $('locateBtn').addEventListener('click', () => {
   if (!navigator.geolocation){ toast('Location is not available in this browser'); return; }
-  toast('Finding you…');
+  const btn = $('locateBtn'); if (btn.classList.contains('busy')) return;
+  toast('Finding you…'); btn.classList.add('busy'); btn.setAttribute('aria-busy', 'true');
+  const done = () => { btn.classList.remove('busy'); btn.removeAttribute('aria-busy'); };
   navigator.geolocation.getCurrentPosition(
-    pos => { setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); toast('Location set'); },
-    err => toast(err.code === 1 ? 'Location access was declined' : 'Could not get your location'),
+    pos => { done(); setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); toast('Location set'); },
+    err => { done(); toast(err.code === 1 ? 'Location access was declined' : 'Could not get your location'); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:60000});
 });
 $('homeBtn').addEventListener('click', () => { setLocation(HOME.lat, HOME.lon, HOME.place); toast('Back to Brookfield'); });
