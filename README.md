@@ -8,7 +8,7 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 
 **Camera view:** tap Start, allow Motion and Camera. Phone compasses drift 5-10 degrees, so tap Calibrate, then put the crosshair on the sun (do not stare at it), or the moon or a bright planet at night, and tap Align.
 
-**Docs:** [How this project was built (retrospective and playbook)](docs/project-retrospective.md) · [Code review, Nov 1 2026](docs/code-review-2026-11-01.md)
+**Docs:** [How this project was built (retrospective and playbook)](docs/project-retrospective.md) · [Code review, Nov 1 2026](docs/code-review-2026-11-01.md) · [Final review, app version 24](docs/code-review-final-2026-11-01.md)
 
 ## Release history
 
