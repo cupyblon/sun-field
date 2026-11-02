@@ -69,8 +69,9 @@ function render(){
   $('sSet').textContent  = ev.sun.set  ? `${fmtT(ev.sun.set,tz)}\n${sunPos(ev.sun.set,lat,lon).az.toFixed(1)}°` : '—';
   $('timeLabel').textContent = fmtT(t,tz);
   $('placeLabel').textContent = S.place + (S.tz !== DEVICE_TZ ? ` · ${tzAbbr(t, S.tz)}` : '');
+  $('locateBtn').classList.toggle('locked', S.place.startsWith('Your location'));   // the GPS arrow turns gold while it's your own spot
   drawTimeline(st);
-  if (S.view === 'times') renderTimes(st);
+  if (S.view === 'times'){ if (document.body.classList.contains('layout-dash') && typeof renderDash === 'function') renderDash(st); else renderTimes(st); }
   if (S.view === 'dome') dome.draw(st);
   if (S.view === 'map') renderMap(st);
 }
@@ -80,18 +81,10 @@ function renderTimes(st){
   const row = (sw,name,sub,time,dur) => `<tr><td><span class="sw" style="background:var(${sw})"></span>${name}${sub?`<div class="sub">${sub}</div>`:''}</td><td class="t">${time}${dur?`<span class="d">${dur}</span>`:''}</td></tr>`;
   const span = (a,b) => a&&b ? [`${fmtT(a,tz)} – ${fmtT(b,tz)}`, `(${fmtSpanDur(a,b)})`] : ['does not occur',''];
   const az = ms => ms ? ` @ ${sunPos(ms,lat,lon).az.toFixed(1)}°` : '';
-  // Near the poles the sun can stay up (or the sky stay light) all day, or never rise: say so instead of "— to —"
-  const noonAlt = sunPos(ev.noon,lat,lon).altGeo, allDayLight = !ev.civ.rise && !ev.civ.set && noonAlt > -6, noLight = !ev.civ.rise && !ev.civ.set && noonAlt <= -6;
-  $('workStart').textContent = allDayLight ? 'All day' : noLight ? 'None' : fmtT(ev.civ.rise,tz);
-  $('workEnd').textContent = allDayLight || noLight ? '' : fmtT(ev.civ.set,tz);
-  document.querySelector('.work-row .muted').hidden = allDayLight || noLight;
-  $('workNote').textContent =
-      allDayLight && !ev.sun.rise && !ev.sun.set && noonAlt > 0 ? "Midnight sun: the sun doesn't set today, so there's work light around the clock."
-    : allDayLight ? "The sun dips below the horizon but the sky stays light enough to work all night."
-    : noLight ? "The sun doesn't rise today and the sky never gets light enough to work outside."
-    : !ev.sun.rise && !ev.sun.set ? "The sun doesn't rise today. This is twilight only, a few hours of dim light."
-    : ev.civ.rise && ev.sun.rise && ev.civ.set && ev.sun.set ? `Usable light starts ${Math.round((ev.sun.rise-ev.civ.rise)/60000)} min before sunrise and lasts ${Math.round((ev.civ.set-ev.sun.set)/60000)} min after sunset.`
-    : 'Civil dawn to civil dusk: enough natural light to work outside.';
+  const wl = workLight(st);
+  $('workStart').textContent = wl.start; $('workEnd').textContent = wl.end;
+  document.querySelector('.work-row .muted').hidden = !wl.end;
+  $('workNote').textContent = wl.note;
   $('am').innerHTML =
     row('--astro','Dawn (astronomical)','sun at −18°',fmtT(ev.astro.rise,tz)) +
     row('--naut','Dawn (nautical)','can see shapes and the horizon',fmtT(ev.naut.rise,tz)) +
@@ -129,6 +122,21 @@ function renderTimes(st){
 // The colour bar and hour ticks only change with the day, place, golden-hour mode or size, so they are drawn once
 // into a spare canvas and copied; each update then only draws the time marker.
 const tlBar = {key: null, cv: document.createElement('canvas')};
+// Work light (civil dawn to civil dusk), worded for every case. Shared by Classic and the Dashboard.
+// Near the poles the sun can stay up (or the sky stay light) all day, or never rise: say so instead of "— to —"
+function workLight(st){
+  const {ev, tz, lat, lon} = st;
+  const noonAlt = sunPos(ev.noon,lat,lon).altGeo, allDayLight = !ev.civ.rise && !ev.civ.set && noonAlt > -6, noLight = !ev.civ.rise && !ev.civ.set && noonAlt <= -6;
+  return {
+    start: allDayLight ? 'All day' : noLight ? 'None' : fmtT(ev.civ.rise,tz),
+    end: allDayLight || noLight ? '' : fmtT(ev.civ.set,tz),
+    note: allDayLight && !ev.sun.rise && !ev.sun.set && noonAlt > 0 ? "Midnight sun: the sun doesn't set today, so there's work light around the clock."
+      : allDayLight ? "The sun dips below the horizon but the sky stays light enough to work all night."
+      : noLight ? "The sun doesn't rise today and the sky never gets light enough to work outside."
+      : !ev.sun.rise && !ev.sun.set ? "The sun doesn't rise today. This is twilight only, a few hours of dim light."
+      : ev.civ.rise && ev.sun.rise && ev.civ.set && ev.sun.set ? `Usable light starts ${Math.round((ev.sun.rise-ev.civ.rise)/60000)} min before sunrise and lasts ${Math.round((ev.civ.set-ev.sun.set)/60000)} min after sunset.`
+      : 'Civil dawn to civil dusk: enough natural light to work outside.'};
+}
 function drawTimeline(st){
   const cv = $('tl'), dpr = window.devicePixelRatio||1, w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
   if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
@@ -222,10 +230,12 @@ function setLocation(lat, lon, place, recenter=true){
 }
 $('locateBtn').addEventListener('click', () => {
   if (!navigator.geolocation){ toast('Location is not available in this browser'); return; }
-  toast('Finding you…');
+  const btn = $('locateBtn'); if (btn.classList.contains('busy')) return;
+  toast('Finding you…'); btn.classList.add('busy'); btn.setAttribute('aria-busy', 'true');
+  const done = () => { btn.classList.remove('busy'); btn.removeAttribute('aria-busy'); };
   navigator.geolocation.getCurrentPosition(
-    pos => { setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); toast('Location set'); },
-    err => toast(err.code === 1 ? 'Location access was declined' : 'Could not get your location'),
+    pos => { done(); setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); toast('Location set'); },
+    err => { done(); toast(err.code === 1 ? 'Location access was declined' : 'Could not get your location'); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:60000});
 });
 $('homeBtn').addEventListener('click', () => { setLocation(HOME.lat, HOME.lon, HOME.place); toast('Back to Brookfield'); });
@@ -268,7 +278,7 @@ $('tl').addEventListener('pointercancel', () => drag=false);
 
 // ---------- tabs ----------
 function show(view){
-  S.view = view; store.set('view', view);
+  S.view = view; store.set('view', view); document.body.dataset.view = view;
   for (const v of ['times','dome','ar','map']) $('view-'+v).hidden = v !== view;
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.view===view ? 'page' : 'false'));
   if (view === 'ar') ar.show(); else ar.hide();

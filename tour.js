@@ -35,7 +35,7 @@
     </div>`;
   document.body.appendChild(root);
   const spot = root.querySelector('.tour-spot'), card = root.querySelector('.tour-card'), arrow = root.querySelector('.tour-arrow');
-  let i = -1, replay = false;
+  let i = -1, replay = false, layoutBefore = null;
   const app = document.querySelector('.app');            // everything behind the tour; made inert while it runs
 
   function place(){
@@ -65,6 +65,9 @@
   function start(fromReplay){
     if (!root.hidden) return;
     replay = !!fromReplay;
+    // the tour walks the Classic screens; a Dashboard user gets Classic for the tour and their layout back after
+    layoutBefore = window.sfLayout ? window.sfLayout() : null;
+    if (layoutBefore === 'dash') window.sfSetLayout('classic', true);
     if ($('sunInfo').hidden) setInfo(true);              // the light bar and info pages are part of the tour
     if (app) app.inert = true;                           // screen readers, taps and Tab can't reach the app behind the tour
     root.hidden = false; document.body.classList.add('touring'); go(0);
@@ -73,6 +76,7 @@
     root.hidden = true; document.body.classList.remove('touring'); store.set('toured', true);
     if (app) app.inert = false;
     document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('tour-tab'));
+    if (layoutBefore === 'dash') window.sfSetLayout('dash', true);
     show('times');                                       // always finish at home
     // put keyboard focus somewhere useful: back on ⓘ after a replay, on the Times tab after the first tour
     const back = replay ? $('aboutBtn') : document.querySelector('.tabs button[data-view="times"]');

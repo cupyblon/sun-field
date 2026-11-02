@@ -4,12 +4,12 @@
    - Map tiles: a saved tile shows at once and is refreshed quietly in the background; new tiles are saved as you
      view them (up to 400, oldest dropped first), so the area you use most works offline too.
    Bump VERSION (and the ?v=N tags in index.html) on every release. */
-const VERSION = 'v26';
+const VERSION = 'v29';
 const SCOPE = self.registration.scope;                 // each install location keeps its own copy (e.g. a test page)
 const APP_CACHE = `sf-app-${VERSION}-${SCOPE}`, TILE_CACHE = 'sf-tiles', MAX_TILES = 400;
-const V = '?v=26';
+const V = '?v=29';
 const FILES = ['./', 'index.html', 'style.css'+V, 'vendor/leaflet.css'+V, 'vendor/leaflet.js'+V,
-  'sun.js'+V, 'moon.js'+V, 'planets.js'+V, 'events.js'+V, 'dome.js'+V, 'motion.js'+V, 'ar.js'+V, 'app.js'+V, 'infopages.js'+V, 'vendor/magvar.js'+V, 'sheets.js'+V, 'tour.js'+V,
+  'sun.js'+V, 'moon.js'+V, 'planets.js'+V, 'events.js'+V, 'dome.js'+V, 'motion.js'+V, 'ar.js'+V, 'app.js'+V, 'infopages.js'+V, 'vendor/magvar.js'+V, 'sheets.js'+V, 'scene.js'+V, 'dash.js'+V, 'tour.js'+V,
   'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'img/qr-lightning.svg', 'img/qr-bitcoin.svg'];
 
 self.addEventListener('install', e => {

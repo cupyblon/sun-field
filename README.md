@@ -16,6 +16,17 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 `?v=N` number the offline copy uses). The older notes below are labelled v2–v14; those were release counts, not app versions.
 v14 below is app version 23.
 
+## App version 29 (Nov 2, 2026): Dashboard layout (idea and mockup by Jimmy Villalpando)
+- A second layout, switched with the ▦ button in the header (remembered). Classic stays the default and is unchanged.
+- Big icon tabs at the top: Today, Sun, Moon, Planets, Events, Camera, Dome, Map (a swipe row on a phone, 8 across on wider screens).
+- Today: work light over a drawn sky picture that follows the real sun and moon for the chosen time (dawn, day, sunset glow, night with stars);
+  Sky at a Glance; key times; sun path; daylight timeline with daylight / usable light / night totals; a date bar with day arrows.
+- Sun, Moon, Planets and Events pages: sun now, rise and set with direction, day-length change, golden and blue hour, twilight, seasons;
+  moon phase, position, distance, rise and set, next phases, visible lunar eclipses; each planet's rise, set and best time after dark;
+  tonight's events, the Milky Way window, eclipses for 3 years and the next 60 days.
+- Dashboard header: round buttons; ? opens How to use; the arrow gets a GPS fix (spins while searching, gold while it's your own spot).
+- The guided tour runs in Classic and returns to the Dashboard afterwards. App versions 27–28 were beta-only.
+
 ## App version 26 (Nov 1, 2026): final-review fixes
 - The title is the page's main heading and the sun-info panel is a named region (accessibility scan: no violations).
 - Work light near the poles: "All day" with a midnight-sun note, or "None" / "twilight only" when the sun doesn't rise.

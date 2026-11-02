@@ -298,3 +298,115 @@ li[data-state="ok"] #ckSkyGo{display:none}
 body.touring .tabs{position:relative;z-index:2601;pointer-events:none}
 .tour-again{display:flex;align-items:center;gap:10px;margin:0 0 10px}
 @media (prefers-reduced-motion: reduce){ .tour-spot{transition:none} }
+
+/* v15: Dashboard layout (switch with ▦). Idea by Jimmy Villalpando. */
+.dash{display:none}
+body.layout-dash #view-times>.pad{display:none}
+body.layout-dash .dash{display:grid;gap:12px;padding:12px max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));max-width:1400px;margin:0 auto}
+body.layout-dash[data-view="times"] #sunInfo,body.layout-dash[data-view="times"] .info-bar{display:none!important}
+#layoutBtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.d-hero{position:relative;overflow:hidden;isolation:isolate;display:grid;gap:12px;grid-template-columns:1fr;border-radius:14px;padding:14px;border:1px solid var(--line);min-height:250px;
+  background:radial-gradient(120% 140% at 85% 110%,rgba(242,168,64,.38),rgba(201,113,90,.18) 35%,rgba(47,111,184,.12) 60%,transparent 75%),linear-gradient(180deg,#141a33,#0d1120)}
+.d-date{color:var(--muted);font-size:14px}
+.d-work h2{margin:4px 0 6px;font-size:24px;letter-spacing:-.01em}
+.d-work-time{font-size:17px;font-weight:700;font-family:var(--font)}
+.d-work-note{color:var(--muted);font-size:13px;margin-top:4px}
+.d-glance{background:rgba(18,23,37,.82);backdrop-filter:blur(4px)}
+.d-glance h2,.d-card h2{font-size:16px;margin:0 0 8px}
+.d-glance ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.d-glance li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline;font-size:13.5px}
+.g-ic{text-align:center}.g-w{color:var(--fg);white-space:nowrap}
+.d-grid{display:grid;gap:12px;grid-template-columns:1fr}
+.d-card{min-width:0}
+.d-times,.d-totals{width:100%;border-collapse:collapse;font-size:13.5px}
+.d-times td,.d-totals td{padding:6px 0;border-top:1px solid var(--line)}
+.d-times tr:first-child td,.d-totals tr:first-child td{border-top:0}
+.d-times .t,.d-totals .t{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.d-times .t .muted{font-size:12px}
+.d-seg{margin-top:10px}
+.d-path{width:100%;height:190px;display:block}
+.d-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.d-stats>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:7px 9px;display:grid;gap:2px;min-width:0}
+.d-stats b{font-size:12px}.d-stats .data{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.d-line{width:100%;height:62px;display:block;border-radius:6px;touch-action:none;cursor:pointer;margin:6px 0 8px}
+.d-bar{position:sticky;bottom:0;z-index:5;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px 10px;align-items:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 0 0;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 16px rgba(0,0,0,.45)}
+.d-datepick{grid-column:1/4;display:flex;align-items:center;gap:6px}
+.d-datepick input{flex:1;min-width:0;font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.d-datepick .chip{padding:6px 12px;font-size:18px;line-height:1}
+.d-mini{display:grid;min-width:0;line-height:1.25}
+.d-mini b{font-size:11.5px;color:var(--muted);font-weight:600}.d-big{font-size:14px;color:var(--fg)}.d-deg{font-size:11.5px;color:var(--muted)}
+.d-nowbtn{grid-column:4;grid-row:1;justify-self:end}
+@media (min-width:700px){
+  .d-hero{grid-template-columns:1.4fr 1fr;align-items:start;padding:18px}
+  .d-work h2{font-size:30px}.d-work-time{font-size:20px}
+  .d-grid{grid-template-columns:1fr 1fr}
+  .d-grid>.d-card:last-child{grid-column:1/-1}
+  .d-bar{grid-template-columns:auto 1fr 1fr 1fr auto;border-radius:14px;margin-bottom:12px}
+  .d-datepick{grid-column:auto}.d-nowbtn{grid-column:auto;grid-row:auto;justify-self:end}
+}
+@media (min-width:1100px){
+  .d-grid{grid-template-columns:1fr 1.25fr 1fr}
+  .d-grid>.d-card:last-child{grid-column:auto}
+  .d-path{height:210px}
+}
+/* v29: Dashboard tabs at the top, Sun / Moon / Planets / Events pages, drawn sky picture, round header buttons */
+.d-scene{position:absolute;left:0;top:0;width:100%;height:100%;z-index:-1;display:block}
+.d-hero{background:var(--surface)}
+.d-work{padding-bottom:96px}
+.d-work{text-shadow:0 1px 3px rgba(0,0,0,.75)}
+.d-work .d-date,.d-work .d-work-note{color:#dde3f0}
+.d-glance{align-self:start}
+.tab-ic,.loc-ic,.dash-only{display:none}
+.tabs .dp-only{display:none}
+.tab-ic svg,.loc-ic svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+body.layout-dash .app>.top{order:-2}
+body.layout-dash .tabs{order:-1;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;
+  padding:8px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));background:var(--bg);border-top:0;border-bottom:1px solid var(--line)}
+body.layout-dash .tabs::-webkit-scrollbar{display:none}
+body.layout-dash .tabs button{flex:0 0 auto;min-width:72px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px 7px;
+  border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);font-size:12.5px;scroll-snap-align:start}
+body.layout-dash .tabs button[aria-current="page"]{border-color:var(--accent);color:var(--accent);box-shadow:none;background:linear-gradient(180deg,rgba(242,165,74,.24),rgba(242,165,74,.06))}
+body.layout-dash .tabs .tab-ic{display:block;width:24px;height:24px}
+body.layout-dash .tabs button[data-view="times"]:not([data-dpage]){order:1}
+body.layout-dash .tabs [data-dpage="sun"]{order:2} body.layout-dash .tabs [data-dpage="moon"]{order:3}
+body.layout-dash .tabs [data-dpage="planets"]{order:4} body.layout-dash .tabs [data-dpage="events"]{order:5}
+body.layout-dash .tabs [data-view="ar"]{order:6} body.layout-dash .tabs [data-view="dome"]{order:7} body.layout-dash .tabs [data-view="map"]{order:8}
+body.layout-dash .dash-only{display:inline-flex}
+body.layout-dash .top-btns{gap:6px}
+body.layout-dash .top-btns .chip{width:38px;height:38px;padding:0;justify-content:center;border-radius:50%;font-size:16px}
+body.layout-dash .loc-ic{display:block;width:18px;height:18px}
+body.layout-dash .loc-lb{display:none}
+#locateBtn.locked{color:var(--accent);border-color:var(--accent)}
+#locateBtn.busy .loc-ic{animation:sf-spin 1s linear infinite}
+@keyframes sf-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ #locateBtn.busy .loc-ic{animation:none;opacity:.5} }
+.d-page{display:grid;gap:12px;min-width:0}
+.d-phead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;padding:2px 2px 0}
+.d-phead h2{display:flex;align-items:center;gap:8px;margin:0;font-size:22px}
+.d-phead .tab-ic{display:block;width:26px;height:26px;color:var(--accent)}
+.d-pdate{font-size:13.5px}
+.d-cols{display:grid;gap:12px;grid-template-columns:1fr}
+.d-card h3{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.d-times .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.d-now{font-size:20px;font-weight:700;margin:0 0 6px}
+.d-moon{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.d-moon .d-now{margin:0}
+.d-mi{display:inline-block;vertical-align:-5px;margin-right:8px}
+.pl-dot{width:12px;height:12px;border-radius:50%;display:inline-block;box-shadow:0 0 6px currentColor}
+.d-tonight{display:grid;gap:4px;font-size:14px}
+.d-ev td:first-child{padding-right:10px}
+.d-ev .sk-ic{display:inline-block;width:20px;text-align:center;margin-right:4px}
+@media (min-width:700px){
+  body.layout-dash .tabs{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));width:100%;max-width:1400px;margin:0 auto;padding:10px 12px;border-bottom:0}
+  body.layout-dash .tabs button{min-width:0;padding:12px 6px 10px;font-size:14px;gap:6px}
+  body.layout-dash .tabs .tab-ic{width:30px;height:30px}
+  .d-hero{min-height:300px}
+  .d-work{padding-bottom:0}
+  .d-cols{grid-template-columns:1fr 1fr}
+  .d-wide{grid-column:1/-1}
+}
+@media (min-width:1100px){
+  .d-cols{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .d-hero{min-height:320px}
+}
