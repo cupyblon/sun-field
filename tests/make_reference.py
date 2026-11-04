@@ -43,7 +43,7 @@ def day_events(lat, lon, tz, date, horizon, body, use_center, pressure):
     return out
 
 ref = {'sun_events': [], 'moon_events': [], 'sun_pos': [], 'moon_pos': [], 'planets': [], 'stars': [],
-       'phases': [], 'seasons': [], 'sun_lon_j2000': [], 'declination': []}
+       'phases': [], 'seasons': [], 'sun_lon_j2000': [], 'declination': [], 'planet_mag': []}
 
 # sunrise/sunset (upper limb with standard refraction = centre at -0.8333 deg, no extra refraction), civil/nautical/astronomical
 for name, (lat, lon, tz) in PLACES.items():
@@ -94,6 +94,14 @@ gm = GeoMag(coefficients_file='wmm/WMM_2025.COF')
 for name, (lat, lon) in {'Brookfield IL': (41.8228,-87.8517), 'Seattle WA': (47.6062,-122.3321), 'Boston MA': (42.3601,-71.0589),
                          'Baumholder DE': (49.6167,7.3333), 'Sydney AU': (-33.8688,151.2093), 'Fairbanks AK': (64.8378,-147.7164)}.items():
     ref['declination'].append({'place': name, 'lat': lat, 'lon': lon, 'year': 2026.84, 'decl': gm.calculate(glat=lat, glon=lon, alt=0, time=2026.84).d})
+
+# planet brightness (magnitude), once a month for 6 years, only while the planet is 20 degrees or more from the Sun (when it can be seen).
+# PyEphem uses older magnitude formulas than the app (Mallama & Hilton 2018), so run.js allows 0.5 magnitude.
+for k in range(80):
+    d = ephem.Date(ephem.Date('2026/01/01') + k*29.3)
+    for pn in ('Mercury','Venus','Mars','Jupiter','Saturn'):
+        g = getattr(ephem, pn)(); g.compute(d)
+        if abs(math.degrees(g.elong)) >= 20: ref['planet_mag'].append({'name': pn, 't': ms(d), 'mag': g.mag})
 
 json.dump(ref, open(__file__.replace('make_reference.py', 'reference.json'), 'w'), indent=0)
 print({k: len(v) for k, v in ref.items()})

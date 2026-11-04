@@ -2,7 +2,7 @@
 
 A phone-first sun app: light times (including civil "work light"), a 3D sky dome, a camera AR view of the sun's path, and a map with sunrise, sunset and shadow bearings.
 
-All the math runs on the device: NOAA solar equations, Meeus for the moon and seasons, NOAA's World Magnetic Model for compass offset. Your location stays in your browser. Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view.
+All the math runs on the device: NOAA solar equations, Meeus for the moon and seasons, NOAA's World Magnetic Model for compass offset. Your exact location stays in your browser (a rounded position, about 1 km, is used to look up your town's name when you use GPS). Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view.
 
 **Use it:** https://cupyblon.github.io/sun-field/ in Safari (iPhone) or Chrome (Android), then Add to Home Screen. Works offline after the first visit.
 
@@ -15,6 +15,17 @@ All the math runs on the device: NOAA solar equations, Meeus for the moon and se
 **About version numbers:** from app version 24 on, release notes use the **app version** shown in ⓘ › About (it is also the
 `?v=N` number the offline copy uses). The older notes below are labelled v2–v14; those were release counts, not app versions.
 v14 below is app version 23.
+
+## App version 31 (Nov 4, 2026): planet brightness, town name for your GPS spot
+- **Planets page:** each planet's brightness (magnitude) with plain words ("very bright", "easy to see"…); the Tonight list shows it too,
+  brightest first. A planet within 15° of the Sun says it's lost in the glare instead of suggesting binoculars.
+  Formulas: Mallama & Hilton (2018, as used by the Astronomical Almanac); Saturn per Meeus, including the rings' tilt.
+- **Town name:** tapping the GPS arrow (or "Use my location" on the welcome screen) now shows your town, e.g. "Brookfield, IL · GPS ±12 m".
+  Only a rounded position (2 decimals, about 1 km) goes to OpenStreetMap's place-name service; the name is saved, so the same spot isn't
+  looked up again. Offline or if the lookup fails, it shows "Your location" as before. Privacy wording updated to say so.
+- **How to use** now describes the Dashboard (the default layout) first.
+- **Tests:** new "Planet brightness vs PyEphem" group, 277 checks (worst 0.48 magnitude, a crescent Venus, where PyEphem's older formula is dimmer).
+  The math suite is now 1,260 checks.
 
 ## App version 30 (Nov 2, 2026): Dashboard is the default
 - The Dashboard layout now opens by default. ▦ switches to Classic, and the choice is remembered.

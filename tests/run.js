@@ -61,6 +61,12 @@ group('Planets vs PyEphem', '0.1° RA/Dec, 0.15° az/alt');
 for (const r of REF.planets){ const p = planetPos(r.name, r.t, r.lat, r.lon), L = `${r.name} ${r.place} ${iso(r.t)}`;
   checkAng(`${L} RA`, p.ra, r.ra, 0.1 / Math.max(0.2, Math.cos(r.dec * Math.PI / 180))); check(`${L} Dec`, p.dec, r.dec, 0.1, '°');
   checkAng(`${L} az`, p.az, r.az, r.alt > 85 ? 2 : 0.15); check(`${L} alt`, p.altGeo, r.alt, 0.15, '°'); }
+if (E("typeof planetMag") === 'function'){
+  // PyEphem uses older formulas than the app (Mallama & Hilton 2018, as in the Astronomical Almanac); they differ most for a crescent Venus
+  group('Planet brightness vs PyEphem', '0.5 magnitude');
+  const planetMag = E('planetMag');
+  for (const r of REF.planet_mag) check(`${r.name} ${iso(r.t)} magnitude`, planetMag(r.name, r.t), r.mag, 0.5, ' mag');
+}
 group('Bright stars vs PyEphem', '0.05°');
 for (const r of REF.stars){ const p = starPos(r.ra2000, r.dec2000, r.t, r.lat, r.lon), L = `${r.name} ${r.place} ${iso(r.t)}`;
   checkAng(`${L} az`, p.az, r.az, r.alt > 85 ? 1 : 0.05); check(`${L} alt`, p.altGeo, r.alt, 0.05, '°'); }
