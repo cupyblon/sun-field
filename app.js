@@ -69,7 +69,7 @@ function render(){
   $('sSet').textContent  = ev.sun.set  ? `${fmtT(ev.sun.set,tz)}\n${sunPos(ev.sun.set,lat,lon).az.toFixed(1)}°` : '—';
   $('timeLabel').textContent = fmtT(t,tz);
   $('placeLabel').textContent = S.place + (S.tz !== DEVICE_TZ ? ` · ${tzAbbr(t, S.tz)}` : '');
-  $('locateBtn').classList.toggle('locked', S.place.startsWith('Your location'));   // the GPS arrow turns gold while it's your own spot
+  $('locateBtn').classList.toggle('locked', /your location|· GPS ±/i.test(S.place));   // the GPS arrow turns gold while it's your own spot
   drawTimeline(st);
   if (S.view === 'times'){ if (document.body.classList.contains('layout-dash') && typeof renderDash === 'function') renderDash(st); else renderTimes(st); }
   if (S.view === 'dome') dome.draw(st);
@@ -234,10 +234,28 @@ $('locateBtn').addEventListener('click', () => {
   toast('Finding you…'); btn.classList.add('busy'); btn.setAttribute('aria-busy', 'true');
   const done = () => { btn.classList.remove('busy'); btn.removeAttribute('aria-busy'); };
   navigator.geolocation.getCurrentPosition(
-    pos => { done(); setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); toast('Location set'); },
+    pos => { done(); setGpsSpot(pos); toast('Location set'); },
     err => { done(); toast(err.code === 1 ? 'Location access was declined' : 'Could not get your location'); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:60000});
 });
+// a GPS fix: set the spot now, then put the town's name on it.
+// Only a rounded position (2 decimals, about 1 km) is sent to OpenStreetMap's place-name service; offline, it stays "Your location".
+function setGpsSpot(pos){
+  const acc = `(±${Math.round(pos.coords.accuracy)} m)`, lat = pos.coords.latitude, lon = pos.coords.longitude;
+  setLocation(lat, lon, `Your location ${acc}`);
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`, saved = store.get('townName', null);
+  const apply = town => { if (S.lat === +(+lat).toFixed(5) && S.lon === +(+lon).toFixed(5) && town) setLocation(lat, lon, `${town} · GPS ±${Math.round(pos.coords.accuracy)} m`, false); };
+  if (saved && saved.k === key){ apply(saved.n); return; }
+  if (!navigator.onLine || !window.fetch) return;
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=en&lat=${lat.toFixed(2)}&lon=${lon.toFixed(2)}`)
+    .then(r => r.ok ? r.json() : null).then(j => {
+      const a = j && j.address; if (!a) return;
+      const town = a.city || a.town || a.village || a.hamlet || a.suburb || a.municipality || a.county; if (!town) return;
+      const iso = a['ISO3166-2-lvl4'] || '', region = a.country_code === 'us' && iso.startsWith('US-') ? iso.slice(3) : (a.state || a.country || '');
+      const n = String(town + (region ? ', ' + region : '')).slice(0, 60);
+      store.set('townName', {k: key, n}); apply(n);
+    }).catch(() => {});
+}
 $('homeBtn').addEventListener('click', () => { setLocation(HOME.lat, HOME.lon, HOME.place); toast('Back to Brookfield'); });
 for (const id of ['lat','lon']) $(id).addEventListener('change', () => { const la=+$('lat').value, lo=+$('lon').value;
   if (la>=-90&&la<=90&&lo>=-180&&lo<=180) setLocation(la, lo, 'Custom spot'); else toast('Latitude −90 to 90, longitude −180 to 180'); });

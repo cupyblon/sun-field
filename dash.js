@@ -87,7 +87,7 @@
       ${pageHead('dpPlanets', ICON.planets, 'Planets')}
       <section class="card d-card"><h3>Tonight</h3><div id="ppTonight" class="d-tonight"></div></section>
       <div class="d-cols" id="ppList"></div>
-      <p class="muted small">Positions are checked against PyEphem to within 0.1°. Rise and set are for a flat, open horizon; "best" is the highest point while the sky is dark.</p>
+      <p class="muted small">Positions are checked against PyEphem to within 0.1°. Rise and set are for a flat, open horizon; "best" is the highest point while the sky is dark. Brightness is in magnitudes: the lower the number, the brighter (Venus is about −4; the faintest stars you can see on a dark night are about +6).</p>
     </div>
     <div class="d-page" data-dp="events" hidden>
       ${pageHead('dpEvents', ICON.events, 'Events')}
@@ -359,6 +359,11 @@
   }
 
   // ---------- Planets page ----------
+  // magnitude in words (lower = brighter; the faintest stars you can see on a dark night are about +6)
+  const BRIGHT = m => m < -3 ? 'brilliant, brighter than any star' : m < -1 ? 'very bright' : m < 0.5 ? 'bright, like the brightest stars'
+    : m < 2 ? 'easy to see' : m < 4 ? 'faint; a dark sky helps' : 'very faint; binoculars help';
+  // closer than 15° to the Sun in the sky: it can't be seen, and binoculars must not be pointed there
+  const glare = (q, s) => Math.acos(Math.min(1, Math.sin(q.alt*R2)*Math.sin(s.alt*R2) + Math.cos(q.alt*R2)*Math.cos(s.alt*R2)*Math.cos((q.az - s.az)*R2)))/R2 < 15;
   function renderPlanets(st){
     const {t, tz, lat, lon, t0, t1} = st;
     const info = once('pl', dayKey(st), () => {
@@ -373,13 +378,16 @@
       return {vis, out};
     });
     const {vis, out} = info;
-    $('ppTonight').innerHTML = [vis.evening.length ? `<div><b>After sunset:</b> ${vis.evening.join(', ')}</div>` : '',
-      vis.morning.length ? `<div><b>Before dawn:</b> ${vis.morning.join(', ')}</div>` : ''].join('') || '<div class="muted">No bright planets well placed tonight.</div>';
+    const mag = n => planetMag(n, t), magTxt = m => (m < 0 ? '−' : '+') + Math.abs(m).toFixed(1);
+    const list = ns => ns.map(n => [n, mag(n)]).sort((a, b) => a[1] - b[1]).map(([n, m]) => `${n} <span class="muted data">(${magTxt(m)})</span>`).join(', ');
+    $('ppTonight').innerHTML = [vis.evening.length ? `<div><b>After sunset:</b> ${list(vis.evening)}</div>` : '',
+      vis.morning.length ? `<div><b>Before dawn:</b> ${list(vis.morning)}</div>` : ''].join('') || '<div class="muted">No bright planets well placed tonight.</div>';
     const at = (n, ms) => { const q = planetPos(n, ms, lat, lon); return `${q.az.toFixed(0)}° ${compass(q.az)}`; };
     $('ppList').innerHTML = PLANETS.map(n => {
       const q = planetPos(n, t, lat, lon), {rs, best} = out[n];
       return `<section class="card d-card d-pl"><h3><span class="pl-dot" style="background:${PLANET_STYLE[n]}"></span>${n}</h3><table class="d-times"><tbody>` +
         tr('Now', q.alt > 0 ? 'Up' : 'Below horizon', q.alt > 0 ? where(q) : '') +
+        tr('Brightness', `mag ${magTxt(mag(n))}`, glare(q, sunPos(t, lat, lon)) ? "lost in the Sun's glare; don't look near the Sun" : BRIGHT(mag(n))) +
         tr('Rises', rs.rise ? fmtT(rs.rise, tz) : 'not today', rs.rise ? at(n, rs.rise) : '') +
         tr('Sets', rs.set ? fmtT(rs.set, tz) : 'not today', rs.set ? at(n, rs.set) : '') +
         tr('Best tonight', best ? fmtT(best.t, tz) : 'not up after dark', best ? where(best) : '') + '</tbody></table></section>';

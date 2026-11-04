@@ -69,3 +69,23 @@ function starPos(raJ, decJ, ms, lat, lon){       // J2000 -> date (rigorous-enou
   const ra = norm360((Math.atan2(A, B) + z)*D), dec = Math.asin(Math.max(-1, Math.min(1, Cc)))*D;
   return eq2altaz(ms, ra, dec, lat, lon);
 }
+
+// apparent brightness (magnitude: lower is brighter; Venus about −4, Jupiter about −2, the faintest naked-eye stars about +6)
+// Mercury to Jupiter: Mallama & Hilton (2018). Saturn: Meeus, including the rings' tilt toward us.
+function planetMag(name, ms, pos){
+  const T = ((ms + DELTA_T*1000)/86400000 + 2440587.5 - 2451545)/36525, p = pos || planetPos(name, ms, 0, 0);
+  const P = helio(name, T - p.dist*0.0057755/36525), E = helio('Earth', T), r = Math.hypot(...P), d = p.dist, re = Math.hypot(...E);
+  const i = Math.acos(Math.max(-1, Math.min(1, (r*r + d*d - re*re)/(2*r*d))))*D, k = 5*Math.log10(r*d);   // i: Sun-planet-Earth angle
+  switch (name){
+    case 'Mercury': return k - 0.613 + i*(6.3280e-2 + i*(-1.6336e-3 + i*(3.3644e-5 + i*(-3.4265e-7 + i*(1.6893e-9 - i*3.0334e-12)))));
+    case 'Venus':   return k + (i < 163.7 ? -4.384 + i*(-1.044e-3 + i*(3.687e-4 + i*(-2.814e-6 + i*8.938e-9))) : 236.05828 + i*(-2.81914 + i*8.39034e-3));
+    case 'Mars':    return k - 1.601 + i*(2.267e-2 - 1.302e-4*i);
+    case 'Jupiter': return k - 9.395 + i*(-3.7e-4 + 6.16e-4*i);
+    case 'Saturn': {
+      const inc = (28.075216 - 0.012998*T)*R, node = (169.508470 + 1.394681*T)*R, lam = p.lam*R, bet = p.beta*R;
+      const sB = Math.sin(inc)*Math.cos(bet)*Math.sin(lam - node) - Math.cos(inc)*Math.sin(bet);
+      return k - 8.88 - 2.60*Math.abs(sB) + 1.25*sB*sB;
+    }
+  }
+  return null;
+}

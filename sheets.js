@@ -4,7 +4,7 @@
      Location (GPS fix) · North correction (NOAA World Magnetic Model) · Compass steady (figure-8 meter) · Sky lock (Camera › Align).
    The individual steps stay available under "Details". */
 (function(){
-  const APP_VERSION = '30';
+  const APP_VERSION = '31';
 
   // ---------- sheets: open/close, focus kept inside while open, back to the button that opened it ----------
   let opener = null;
@@ -45,7 +45,7 @@
 
   // ---------- checklist ----------
   const row = (id, state, text) => { $(id).dataset.state = state; $(id + 'Txt').textContent = text; };
-  const isGps = () => /^GPS fix|^Your location/.test(S.place);
+  const isGps = () => /GPS fix|your location|· GPS ±/i.test(S.place);
   const declIsNoaa = () => { const d = noaaDecl(); return d != null && store.get('declAuto', true) && Math.abs(d - S.decl) < 0.05; };
   let compassOn = false, still0 = null, steady = false, raf = null;
   function fillChecklist(){
@@ -181,11 +181,11 @@
     window.sfFirstVisit = true;                         // tour.js starts the guided tour when this sheet closes
     setTimeout(() => { $('welcome').hidden = false; aboutTab('howto'); openSheet('aboutSheet'); }, 500);
     const done = () => { store.set('welcomed', true); $('welcome').hidden = true; };
-    $('welcomeSkip').addEventListener('click', () => { done(); toast('Showing Brookfield, IL · tap Locate any time'); });
+    $('welcomeSkip').addEventListener('click', () => { done(); toast('Showing Brookfield, IL · tap the arrow at the top to use your location'); });
     $('welcomeLocate').addEventListener('click', async () => {
       $('welcomeLocate').disabled = true; $('welcomeNote').textContent = 'Finding you…';
       const pos = await gpsFix();
-      if (pos && pos.coords){ setLocation(pos.coords.latitude, pos.coords.longitude, `Your location (±${Math.round(pos.coords.accuracy)} m)`); done(); toast('Location set'); }
+      if (pos && pos.coords){ setGpsSpot(pos); done(); toast('Location set'); }
       else { $('welcomeLocate').disabled = false; $('welcomeNote').textContent = pos && pos.code === 1 ? 'Location access was declined. You can allow it in your browser settings, or tap Not now.' : 'Could not get a fix. Try again, or tap Not now.'; }
     });
     $('aboutClose').addEventListener('click', () => { if (!$('welcome').hidden){ store.set('welcomed', true); $('welcome').hidden = true; } });

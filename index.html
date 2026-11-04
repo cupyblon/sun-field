@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=30">
+<link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
 <div class="app">
@@ -56,7 +56,7 @@
           <div class="row-btns"><button type="button" id="setCal" class="chip">Calibrate…</button><button type="button" id="homeBtn" class="chip">Reset to Brookfield</button></div>
           <p class="muted small"><a href="https://github.com/cupyblon/sun-field#how-accurate-is-it" target="_blank" rel="noopener">How accurate is it?</a> Checked against NASA, the IMO and PyEphem.</p>
         </div>
-        <p class="muted small foot">Times are shown to the minute (seconds dropped). Sun, moon and sky math runs on your phone (NOAA and Meeus equations). Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view. Nothing else leaves your phone. Once opened, it works with no signal.</p>
+        <p class="muted small foot">Times are shown to the minute (seconds dropped). Sun, moon and sky math runs on your phone (NOAA and Meeus equations). Like any website, GitHub (which hosts the app) and OpenStreetMap (map images) see your IP address, and OpenStreetMap sees which map area you view. When you use your GPS location, a rounded position (about 1 km) goes to OpenStreetMap to look up your town's name; your exact position stays on your phone. Nothing else leaves your phone. Once opened, it works with no signal.</p>
       </div>
     </section>
 
@@ -171,7 +171,7 @@
       <div class="welcome" id="welcome" hidden>
         <p><b>Welcome to Sun Field.</b> It works out sunrise, work light, shadows and the sky for wherever you are. Start with your location:</p>
         <div class="row-btns"><button type="button" class="big-btn" id="welcomeLocate">Use my location</button><button type="button" class="chip" id="welcomeSkip">Not now</button></div>
-        <p class="muted small" id="welcomeNote">Your location stays on your phone. "Not now" shows Brookfield, IL; tap <b>Locate</b> at the top any time.</p>
+        <p class="muted small" id="welcomeNote">Your exact location stays on your phone; only a rounded position (about 1 km) is used to look up your town's name. "Not now" shows Brookfield, IL; tap Locate (the arrow at the top) any time.</p>
       </div>
       <div class="about-tabs" role="tablist">
         <button type="button" role="tab" data-at="howto">How to use</button><button type="button" role="tab" data-at="tips">Tips</button><button type="button" role="tab" data-at="acc">Accuracy</button><button type="button" role="tab" data-at="me">About</button>
@@ -179,12 +179,13 @@
       <div class="about-body" data-ap="howto">
         <p class="tour-again"><button type="button" class="chip" id="tourAgain">Take the tour</button> <span class="muted small">A one-minute walk through every screen.</span></p>
         <ol class="howto">
+          <li><b>Dashboard</b> Opens by default. Big tabs at the top: <b>Today</b> (work light, sky at a glance, key times, sun path, daylight timeline), <b>Sun</b>, <b>Moon</b>, <b>Planets</b> (with how bright each one is), <b>Events</b>, then Camera, Dome and Map. Change the day with ‹ › at the bottom. The arrow at the top uses your GPS and names your town; <b>?</b> opens this page. <b>▦</b> switches to the Classic layout, described below.</li>
           <li><b>Times</b> Today's light: work light, dawn and dusk, golden and blue hour, solar noon and the seasons. Switch between Extended (longer, wider) and Classic golden and blue hours.</li>
           <li><b>Pick a time</b> Drag the light bar at the bottom to any time of day, pick a date, or tap <b>Now</b> to go back to live.</li>
           <li><b>Info pages</b> Swipe the strip above the light bar: Sun, Twilight, Shadow, Moon, Moon phases, Milky Way and Sky today. On Shadow, tap ✎ to set an object's height.</li>
           <li><b>Dome</b> The sky as a 3D bowl: today's sun path, the season paths, the moon, planets and stars. Drag to spin, pinch to zoom, <b>Layers</b> to turn things on or off, <b>Live</b> to make it follow your phone.</li>
           <li><b>Camera</b> Point your phone at the sky to see the sun's path, the moon and planets over the camera. Use <b>Calibrate</b> and <b>Align</b> for the best aim.</li>
-          <li><b>Map</b> Sunrise and sunset lines, the sun's direction and the shadow from your spot. Tap the map to move your spot; <b>Locate</b> uses GPS.</li>
+          <li><b>Map</b> Sunrise and sunset lines, the sun's direction and the shadow from your spot. Tap the map to move your spot; <b>Locate</b> (the arrow in the Dashboard) uses GPS.</li>
         </ol>
       </div>
       <div class="about-body" data-ap="tips" hidden>
@@ -246,19 +247,19 @@
   </div>
 </div>
 
-<script src="sun.js?v=30"></script>
-<script src="moon.js?v=30"></script>
-<script src="planets.js?v=30"></script>
-<script src="events.js?v=30"></script>
-<script src="dome.js?v=30"></script>
-<script src="motion.js?v=30"></script>
-<script src="ar.js?v=30"></script>
-<script src="app.js?v=30"></script>
-<script src="infopages.js?v=30"></script>
-<script src="vendor/magvar.js?v=30"></script>
-<script src="sheets.js?v=30"></script>
-<script src="scene.js?v=30"></script>
-<script src="dash.js?v=30"></script>
-<script src="tour.js?v=30"></script>
+<script src="sun.js?v=31"></script>
+<script src="moon.js?v=31"></script>
+<script src="planets.js?v=31"></script>
+<script src="events.js?v=31"></script>
+<script src="dome.js?v=31"></script>
+<script src="motion.js?v=31"></script>
+<script src="ar.js?v=31"></script>
+<script src="app.js?v=31"></script>
+<script src="infopages.js?v=31"></script>
+<script src="vendor/magvar.js?v=31"></script>
+<script src="sheets.js?v=31"></script>
+<script src="scene.js?v=31"></script>
+<script src="dash.js?v=31"></script>
+<script src="tour.js?v=31"></script>
 </body>
 </html>
