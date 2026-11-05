@@ -284,7 +284,7 @@ li[data-state="ok"] #ckSkyGo{display:none}
 .tour{position:fixed;inset:0;z-index:2600}
 .tour[hidden]{display:none}
 .tour-spot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(3,5,10,.72);outline:2px solid var(--accent);transition:all .25s ease;pointer-events:none}
-.tour-card{position:fixed;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:12px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.tour-card{position:fixed;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:12px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-height:calc(100dvh - 200px);overflow-y:auto}
 .tour-card h3{margin:2px 0 4px;font-size:17px}
 .tour-card p{margin:0 0 10px;font-size:14px;line-height:1.45}
 .tour-count{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
