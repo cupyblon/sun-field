@@ -64,9 +64,12 @@
 
   function place(){
     const s = STEPS[i], el = document.querySelector(s.target); if (!el) return;
-    // if the target is below the visible area, scroll it into view before measuring
+    // scroll window (not the inert app) so the target is visible before we measure
     const rPre = el.getBoundingClientRect();
-    if (rPre.bottom > window.innerHeight - 80) el.scrollIntoView({block:'center', behavior:'instant'});
+    if (rPre.bottom > window.innerHeight - 80 || rPre.top < 0) {
+      const mid = el.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2 + el.offsetHeight / 2;
+      window.scrollTo({top: Math.max(0, mid), behavior: 'instant'});
+    }
     const r = el.getBoundingClientRect(), pad = 6, vw = window.innerWidth, vh = window.innerHeight;
     Object.assign(spot.style, {left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + 2*pad) + 'px', height: (r.height + 2*pad) + 'px'});
     // measure real header bottom so safeTop works on any screen size
