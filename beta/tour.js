@@ -66,12 +66,17 @@
     const s = STEPS[i], el = document.querySelector(s.target); if (!el) return;
     const r = el.getBoundingClientRect(), pad = 6, vw = window.innerWidth, vh = window.innerHeight;
     Object.assign(spot.style, {left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + 2*pad) + 'px', height: (r.height + 2*pad) + 'px'});
-    // card goes below the target if there's room, otherwise above, otherwise over the middle of a big target
-    const cw = Math.min(340, vw - 24), ch = card.offsetHeight || 180, gap = 16;
+    // card goes below the target if there's room, otherwise above, otherwise centred on a big target
+    const cw = Math.min(340, vw - 24), ch = card.offsetHeight || 200, gap = 16;
+    // safeTop: below the fixed header+tabs (roughly 160 px); never let the card start above that
+    const safeTop = Math.max(r.bottom + gap, 164);
     let top, side;
-    if (r.bottom + gap + ch < vh - 8){ top = r.bottom + gap; side = 'up'; }
-    else if (r.top - gap - ch > 8){ top = r.top - gap - ch; side = 'down'; }
-    else { top = Math.max(8, Math.min(vh - ch - 8, r.top + r.height/2 - ch/2)); side = 'none'; }
+    // prefer below — always for header-area targets (r.top < 170), otherwise if there's room
+    if (r.top < 170 || r.bottom + gap + ch < vh - 8){ top = r.bottom + gap; side = 'up'; }
+    else if (r.top - gap - ch > safeTop){ top = r.top - gap - ch; side = 'down'; }
+    else { top = Math.max(safeTop, Math.min(vh - ch - 8, r.top + r.height/2 - ch/2)); side = 'none'; }
+    // hard clamp so card never goes above the safe zone or off-screen
+    top = Math.max(safeTop, Math.min(vh - ch - 8, top));
     const left = Math.max(12, Math.min(vw - cw - 12, r.left + r.width/2 - cw/2));
     Object.assign(card.style, {width: cw + 'px', left: left + 'px', top: top + 'px'});
     arrow.className = 'tour-arrow ' + side;
